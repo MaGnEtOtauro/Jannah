@@ -121,3 +121,47 @@ function jannah_post_content_width( $content ) {
 
 	return $content;
 }
+
+/**
+ * Add custom meta field for game version
+ */
+add_action( 'add_meta_boxes', 'jannah_add_game_version_meta_box' );
+function jannah_add_game_version_meta_box() {
+	add_meta_box(
+		'game_version_meta_box',
+		'Game Version',
+		'jannah_game_version_meta_box_callback',
+		'post',
+		'side',
+		'default'
+	);
+}
+
+function jannah_game_version_meta_box_callback( $post ) {
+	wp_nonce_field( 'save_game_version_meta', 'game_version_meta_nonce' );
+	$game_version = get_post_meta( $post->ID, '_game_version', true );
+	?>
+	<label for="game_version">Game Version:</label>
+	<input type="text" id="game_version" name="game_version" value="<?php echo esc_attr( $game_version ); ?>" style="width: 100%;" placeholder="e.g., v1.2.3" />
+	<p class="description">Enter the game version to display on the slider (e.g., v1.2.3)</p>
+	<?php
+}
+
+add_action( 'save_post', 'jannah_save_game_version_meta' );
+function jannah_save_game_version_meta( $post_id ) {
+	if ( ! isset( $_POST['game_version_meta_nonce'] ) || ! wp_verify_nonce( $_POST['game_version_meta_nonce'], 'save_game_version_meta' ) ) {
+		return;
+	}
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	if ( isset( $_POST['game_version'] ) ) {
+		update_post_meta( $post_id, '_game_version', sanitize_text_field( $_POST['game_version'] ) );
+	}
+}
