@@ -1,6 +1,6 @@
 <?php
 /**
- * Sliders template - CHILD THEME VERSION
+ * Sliders template
  *
  * This template can be overridden by copying it to your-child-theme/templates/featured.php.
  *
@@ -10,51 +10,6 @@
  * @author   TieLabs
  * @version  7.5.0
  */
-
-// DEBUG: Child theme template is being used
-echo '<!-- CHILD THEME FEATURED.PHP TEMPLATE IS ACTIVE -->';
-
-// Add inline CSS for game version tag
-echo '<style>
-.game-version-tag {
-    position: absolute !important;
-    top: 12px !important;
-    right: 12px !important;
-    background: linear-gradient(135deg, #0088ff 0%, #0066cc 100%) !important;
-    color: #ffffff !important;
-    padding: 5px 12px !important;
-    border-radius: 15px !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.8px !important;
-    z-index: 9999 !important;
-    box-shadow: 0 2px 8px rgba(0, 136, 255, 0.3) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    white-space: nowrap !important;
-    display: inline-block !important;
-    line-height: 1.2 !important;
-}
-
-.game-version-tag:hover {
-    background: linear-gradient(135deg, #0099ff 0%, #0077dd 100%) !important;
-    transform: translateY(-2px) scale(1.05) !important;
-    box-shadow: 0 4px 15px rgba(0, 136, 255, 0.4) !important;
-}
-
-@media (max-width: 768px) {
-    .game-version-tag {
-        top: 8px !important;
-        right: 8px !important;
-        padding: 3px 8px !important;
-        font-size: 9px !important;
-        border-radius: 12px !important;
-    }
-}
-</style>';
 
 defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 
@@ -420,17 +375,6 @@ if( ! empty( $slider_settings ) ){
 						if( $show_reviews ){
 							$slider_items[ $slider_post_id ]['review_score'] = tie_get_score( 'large' );
 						}
-						
-						// Game Version
-						$game_version = get_post_meta( $slider_post_id, '_game_version', true );
-						// Debug: Check what we're getting
-						echo '<!-- DEBUG: Post ID: ' . $slider_post_id . ' | Game Version: "' . $game_version . '" | Length: ' . strlen($game_version) . ' -->';
-						if( ! empty( $game_version ) && trim( $game_version ) !== '' ){
-							$slider_items[ $slider_post_id ]['game_version'] = trim( $game_version );
-						} else {
-							// Explicitly set to empty if no version exists
-							$slider_items[ $slider_post_id ]['game_version'] = '';
-						}
 
 						// Do not duplicate posts For Page Builder
 						if( $is_do_not_dublicate ){
@@ -593,14 +537,14 @@ if( ! empty( $slider_settings ) ){
 
 												printf( $before_slider, $slide_image, $class, $slide_link, esc_attr( strip_tags( $slide_title ) ) );
 
+													// Display game version tag for all slider types - positioned over the poster
+													$game_version = get_post_meta( $slider_post_id, '_game_version', true );
+													if( ! empty( $game_version ) && trim( $game_version ) !== '' ){
+														echo '<span class="game-version-tag">'. esc_html( trim( $game_version ) ) .'</span>';
+													}
+
 													if( ! empty( $review_score ) ){
 														echo ( $review_score );
-													}
-													
-													// Display game version tag
-													$current_game_version = isset( $single_slide['game_version'] ) ? $single_slide['game_version'] : '';
-													if( ! empty( $current_game_version ) && trim( $current_game_version ) !== '' ){
-														echo '<span class="game-version-tag">'. esc_html( trim( $current_game_version ) ) .'</span>';
 													}
 
 													echo '<div class="container">';
@@ -718,6 +662,12 @@ if( ! empty( $slider_settings ) ){
 
 													printf( $before_slider, $slide_image, $class, $slide_link, esc_attr( strip_tags( $slide_title ) ) );
 
+													// Display game version tag for grid sliders - positioned over the poster
+													$game_version = get_post_meta( $slider_post_id, '_game_version', true );
+													if( ! empty( $game_version ) && trim( $game_version ) !== '' ){
+														echo '<span class="game-version-tag">'. esc_html( trim( $game_version ) ) .'</span>';
+													}
+
 														if( $slider != 6 ){
 
 															if( ! empty( $slide_categories ) ){
@@ -727,12 +677,6 @@ if( ! empty( $slider_settings ) ){
 															if( ! empty( $review_score ) ){
 																echo ( $review_score );
 															}
-														}
-														
-														// Display game version tag
-														$current_game_version = isset( $single_slide['game_version'] ) ? $single_slide['game_version'] : '';
-														if( ! empty( $current_game_version ) && trim( $current_game_version ) !== '' ){
-															echo '<span class="game-version-tag">'. esc_html( trim( $current_game_version ) ) .'</span>';
 														}
 
 														echo '<div class="thumb-content">';
