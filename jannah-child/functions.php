@@ -9,8 +9,22 @@ function tie_theme_child_styles_scripts() {
 	}
 
 	/* THIS WILL ALLOW ADDING CUSTOM CSS TO THE style.css */
-	wp_enqueue_style( 'tie-theme-child-css', get_stylesheet_directory_uri().'/style.css', '' );
+	wp_enqueue_style( 'tie-theme-child-css', get_stylesheet_directory_uri().'/style.css', '', '1.0.1' );
 
+}
+
+// Force refresh admin scripts
+add_action( 'admin_enqueue_scripts', 'force_admin_refresh' );
+function force_admin_refresh() {
+	wp_enqueue_script( 'jquery' );
+}
+
+// Debug: Add admin notice to confirm child theme is active
+add_action( 'admin_notices', 'child_theme_debug_notice' );
+function child_theme_debug_notice() {
+	if ( get_current_screen()->id === 'post' ) {
+		echo '<div class="notice notice-success"><p>Jannah Child Theme is Active - Game Details Meta Box Loaded</p></div>';
+	}
 }
 
 // =====================================================
@@ -435,4 +449,299 @@ function get_download_button_subtitle( $type ) {
 	);
 	
 	return isset( $subtitles[ $type ] ) ? $subtitles[ $type ] : 'Download Now';
+}
+
+// =====================================================
+// CHANGE READ MORE BUTTON TEXT TO DOWNLOAD
+// =====================================================
+
+// Filter to change "Read More" button text to "Download"
+add_filter( 'TieLabs/more_link_button', 'change_read_more_to_download' );
+function change_read_more_to_download( $button ) {
+	// Replace "Read More »" with "Download"
+	$button = str_replace( 'Read More &raquo;', 'Download', $button );
+	return $button;
+}
+
+// =====================================================
+// GAME DETAILS AND POSTER META BOXES
+// =====================================================
+
+// Add Game Details Meta Box
+add_action( 'add_meta_boxes', 'add_game_details_meta_box' );
+function add_game_details_meta_box() {
+	add_meta_box(
+		'game_details_meta_box',
+		'🎮 Game Details & Poster (Updated v1.1)',
+		'game_details_meta_box_callback',
+		'post',
+		'normal',
+		'high'
+	);
+}
+
+// Game Details Meta Box Callback
+function game_details_meta_box_callback( $post ) {
+	// Add nonce for security
+	wp_nonce_field( 'game_details_meta_box', 'game_details_meta_box_nonce' );
+	
+	// Get existing values
+	$poster_image_id = get_post_meta( $post->ID, '_game_poster_image_id', true );
+	$poster_image_url = $poster_image_id ? wp_get_attachment_url( $poster_image_id ) : '';
+	$cracked_by = get_post_meta( $post->ID, '_game_cracked_by', true );
+	$sourced_from = get_post_meta( $post->ID, '_game_sourced_from', true );
+	$developer = get_post_meta( $post->ID, '_game_developer', true );
+	$version = get_post_meta( $post->ID, '_game_version', true );
+	$file_size = get_post_meta( $post->ID, '_game_file_size', true );
+	
+	?>
+	<div id="game-details-container">
+		<style>
+		#game-details-container {
+			padding: 20px;
+			background: #f9f9f9;
+			border-radius: 8px;
+			margin: 10px 0;
+		}
+		.game-details-section {
+			background: white;
+			border: 1px solid #ddd;
+			border-radius: 6px;
+			padding: 20px;
+			margin-bottom: 20px;
+		}
+		.game-details-section h3 {
+			margin-top: 0;
+			color: #23282d;
+			border-bottom: 1px solid #eee;
+			padding-bottom: 10px;
+		}
+		.game-detail-field {
+			margin-bottom: 15px;
+		}
+		.game-detail-field label {
+			display: block;
+			font-weight: 600;
+			margin-bottom: 5px;
+			color: #333;
+		}
+		.game-detail-field input[type="text"] {
+			width: 100%;
+			padding: 8px 12px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+		}
+		.game-detail-field input[type="text"]:focus {
+			border-color: #0073aa;
+			outline: none;
+			box-shadow: 0 0 3px rgba(0,115,170,0.3);
+		}
+		.poster-upload-container {
+			display: flex;
+			align-items: flex-start;
+			gap: 20px;
+		}
+		.poster-preview {
+			width: 190px;
+			height: 239px;
+			border: 2px dashed #ddd;
+			border-radius: 6px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #f5f5f5;
+			position: relative;
+			overflow: hidden;
+		}
+		.poster-preview img {
+			max-width: 100%;
+			max-height: 100%;
+			object-fit: cover;
+		}
+		.poster-preview.has-image {
+			border-style: solid;
+		}
+		.poster-upload-buttons {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+		.upload-poster-button, .remove-poster-button {
+			padding: 10px 20px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 14px;
+			text-align: center;
+		}
+		.upload-poster-button {
+			background: #0073aa;
+			color: white;
+		}
+		.upload-poster-button:hover {
+			background: #005a87;
+		}
+		.remove-poster-button {
+			background: #dc3232;
+			color: white;
+		}
+		.remove-poster-button:hover {
+			background: #a00;
+		}
+		.game-details-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 15px;
+		}
+		@media (max-width: 768px) {
+			.game-details-row {
+				grid-template-columns: 1fr;
+			}
+		}
+		</style>
+		
+		<!-- Poster Image Section -->
+		<div class="game-details-section">
+			<h3>📸 Game Poster Image</h3>
+			<p style="margin-bottom: 15px; color: #666;">Upload a poster image (recommended size: 300x380px or similar aspect ratio)</p>
+			
+			<div class="poster-upload-container">
+				<div class="poster-preview <?php echo $poster_image_url ? 'has-image' : ''; ?>" id="poster-preview">
+					<?php if ( $poster_image_url ): ?>
+						<img src="<?php echo esc_url( $poster_image_url ); ?>" alt="Game Poster">
+					<?php else: ?>
+						<span style="color: #999;">No poster uploaded</span>
+					<?php endif; ?>
+				</div>
+				
+				<div class="poster-upload-buttons">
+					<button type="button" class="upload-poster-button" id="upload-poster-button">
+						<?php echo $poster_image_url ? '🔄 Change Poster' : '📤 Upload Poster'; ?>
+					</button>
+					<?php if ( $poster_image_url ): ?>
+						<button type="button" class="remove-poster-button" id="remove-poster-button">
+							🗑️ Remove Poster
+						</button>
+					<?php endif; ?>
+					<input type="hidden" name="game_poster_image_id" id="game_poster_image_id" value="<?php echo esc_attr( $poster_image_id ); ?>">
+				</div>
+			</div>
+		</div>
+		
+		<!-- Game Information Section -->
+		<div class="game-details-section">
+			<h3>📋 Game Information</h3>
+			
+			<div class="game-details-row">
+				<div class="game-detail-field">
+					<label for="game_cracked_by">🔓 Cracked By:</label>
+					<input type="text" id="game_cracked_by" name="game_cracked_by" value="<?php echo esc_attr( $cracked_by ); ?>" placeholder="e.g., CODEX, CPY, PLAZA">
+				</div>
+				
+				<div class="game-detail-field">
+					<label for="game_sourced_from">📦 Sourced From:</label>
+					<input type="text" id="game_sourced_from" name="game_sourced_from" value="<?php echo esc_attr( $sourced_from ); ?>" placeholder="e.g., Steam, Epic Games, GOG">
+				</div>
+			</div>
+			
+			<div class="game-details-row">
+				<div class="game-detail-field">
+					<label for="game_developer">👨‍💻 Developer:</label>
+					<input type="text" id="game_developer" name="game_developer" value="<?php echo esc_attr( $developer ); ?>" placeholder="e.g., Electronic Arts, Ubisoft">
+				</div>
+				
+				<div class="game-detail-field">
+					<label for="game_version">🏷️ Version:</label>
+					<input type="text" id="game_version" name="game_version" value="<?php echo esc_attr( $version ); ?>" placeholder="e.g., v1.0.5, Build 12345">
+				</div>
+			</div>
+			
+			<div class="game-detail-field">
+				<label for="game_file_size">💾 File Size:</label>
+				<input type="text" id="game_file_size" name="game_file_size" value="<?php echo esc_attr( $file_size ); ?>" placeholder="e.g., 25 GB, 1.5 GB">
+			</div>
+		</div>
+	</div>
+	
+	<script>
+	jQuery(document).ready(function($) {
+		// Upload poster image
+		$('#upload-poster-button').click(function(e) {
+			e.preventDefault();
+			
+			var mediaUploader = wp.media({
+				title: 'Choose Game Poster',
+				button: {
+					text: 'Use this poster'
+				},
+				multiple: false
+			});
+			
+			mediaUploader.on('select', function() {
+				var attachment = mediaUploader.state().get('selection').first().toJSON();
+				$('#game_poster_image_id').val(attachment.id);
+				$('#poster-preview').addClass('has-image').html('<img src="' + attachment.url + '" alt="Game Poster">');
+				$('#upload-poster-button').text('🔄 Change Poster');
+				
+				// Add remove button if not exists
+				if (!$('#remove-poster-button').length) {
+					$('.poster-upload-buttons').append('<button type="button" class="remove-poster-button" id="remove-poster-button">🗑️ Remove Poster</button>');
+				}
+			});
+			
+			mediaUploader.open();
+		});
+		
+		// Remove poster image
+		$(document).on('click', '#remove-poster-button', function(e) {
+			e.preventDefault();
+			$('#game_poster_image_id').val('');
+			$('#poster-preview').removeClass('has-image').html('<span style="color: #999;">No poster uploaded</span>');
+			$('#upload-poster-button').text('📤 Upload Poster');
+			$(this).remove();
+		});
+	});
+	</script>
+	<?php
+}
+
+// Save Game Details Meta Box Data
+add_action( 'save_post', 'save_game_details_meta_box_data' );
+function save_game_details_meta_box_data( $post_id ) {
+	// Check if nonce is valid
+	if ( ! isset( $_POST['game_details_meta_box_nonce'] ) || 
+		 ! wp_verify_nonce( $_POST['game_details_meta_box_nonce'], 'game_details_meta_box' ) ) {
+		return;
+	}
+	
+	// Check if user has permission to edit post
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	
+	// Check if autosave
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	
+	// Save poster image ID
+	if ( isset( $_POST['game_poster_image_id'] ) ) {
+		update_post_meta( $post_id, '_game_poster_image_id', absint( $_POST['game_poster_image_id'] ) );
+	}
+	
+	// Save game details
+	$fields = array(
+		'game_cracked_by' => '_game_cracked_by',
+		'game_sourced_from' => '_game_sourced_from',
+		'game_developer' => '_game_developer',
+		'game_version' => '_game_version',
+		'game_file_size' => '_game_file_size'
+	);
+	
+	foreach ( $fields as $field_name => $meta_key ) {
+		if ( isset( $_POST[ $field_name ] ) ) {
+			update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ $field_name ] ) );
+		}
+	}
 }
