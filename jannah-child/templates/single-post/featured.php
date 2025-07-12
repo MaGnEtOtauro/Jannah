@@ -72,7 +72,7 @@ if( $post_format == 'standard' ) {
 							
 							<?php if( $file_size ): ?>
 								<div class="game-detail-item">
-									<span class="detail-label"><i class="fa fa-hdd-o" aria-hidden="true"></i> File Size:</span>
+									<span class="detail-label"><i class="fa fa-download" aria-hidden="true"></i> File Size:</span>
 									<span class="detail-value"><?php echo esc_html( $file_size ); ?></span>
 								</div>
 							<?php endif; ?>
