@@ -19,6 +19,47 @@ function force_admin_refresh() {
 	wp_enqueue_script( 'jquery' );
 }
 
+// Add smooth scroll functionality for download button
+add_action( 'wp_footer', 'add_smooth_scroll_script' );
+function add_smooth_scroll_script() {
+	?>
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		// Smooth scroll for download button
+		const downloadBtn = document.querySelector('.quick-download-btn[data-smooth-scroll="true"]');
+		if (downloadBtn) {
+			downloadBtn.addEventListener('click', function(e) {
+				e.preventDefault();
+				const targetId = this.getAttribute('href').substring(1);
+				const targetElement = document.getElementById(targetId);
+				
+				if (targetElement) {
+					// Calculate offset for fixed headers
+					const offset = 20; // Adjust this value if needed
+					const elementPosition = targetElement.getBoundingClientRect().top;
+					const offsetPosition = elementPosition + window.pageYOffset - offset;
+					
+					window.scrollTo({
+						top: offsetPosition,
+						behavior: 'smooth'
+					});
+					
+					// Optional: Add a subtle flash effect to the target section
+					targetElement.style.transition = 'background-color 0.3s ease';
+					const originalBg = targetElement.style.backgroundColor;
+					targetElement.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
+					
+					setTimeout(function() {
+						targetElement.style.backgroundColor = originalBg;
+					}, 500);
+				}
+			});
+		}
+	});
+	</script>
+	<?php
+}
+
 // Debug: Add admin notice to confirm child theme is active
 add_action( 'admin_notices', 'child_theme_debug_notice' );
 function child_theme_debug_notice() {
@@ -386,7 +427,7 @@ function add_download_section_to_content( $content ) {
 function generate_download_section_html( $download_buttons ) {
 	ob_start();
 	?>
-	<div class="container-wrapper game-download-section">
+	<div class="container-wrapper game-download-section" id="game-download-section">
 		<div class="widget-title">
 			<h4 class="main-title">
 				<span class="tie-icon-download" aria-hidden="true"></span>
@@ -472,7 +513,7 @@ add_action( 'add_meta_boxes', 'add_game_details_meta_box' );
 function add_game_details_meta_box() {
 	add_meta_box(
 		'game_details_meta_box',
-		'🎮 Game Details & Poster (Updated v1.1)',
+		'🎮 Game Details & Poster',
 		'game_details_meta_box_callback',
 		'post',
 		'normal',
@@ -741,7 +782,54 @@ function save_game_details_meta_box_data( $post_id ) {
 	
 	foreach ( $fields as $field_name => $meta_key ) {
 		if ( isset( $_POST[ $field_name ] ) ) {
-			update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ $field_name ] ) );
+			$new_value = sanitize_text_field( $_POST[ $field_name ] );
+			
+			// Special handling for game version to track changes
+			if ( $field_name === 'game_version' ) {
+				$old_value = get_post_meta( $post_id, $meta_key, true );
+				
+				// If version has changed, update the version change timestamp
+				if ( $old_value !== $new_value && !empty( $new_value ) ) {
+					update_post_meta( $post_id, '_game_version_updated', current_time( 'timestamp' ) );
+				}
+			}
+			
+			update_post_meta( $post_id, $meta_key, $new_value );
 		}
 	}
 }
+
+// =====================================================
+// RECENT UPDATES FUNCTIONALITY
+// =====================================================
+
+// Add Recent Updates option to Sort By dropdown
+add_filter( 'TieLabs/Builder/Block/post_order_args', 'add_recent_updates_sort_option' );
+function add_recent_updates_sort_option( $args ) {
+	$args['recent_updates'] = esc_html__( 'Recent Updates', 'jannah-child' );
+	return $args;
+}
+
+// Filter blocks to show only recently updated games when "Recent Updates" is selected
+add_filter( 'TieLabs/Query/args', 'filter_recent_updates_query', 10, 2 );
+function filter_recent_updates_query( $args, $block ) {
+	// Check if Sort By is set to "recent_updates"
+	if ( isset( $block['order'] ) && $block['order'] === 'recent_updates' ) {
+		
+		// Only show posts that have recent version updates
+		$args['meta_query'] = array(
+			array(
+				'key' => '_game_version_updated',
+				'compare' => 'EXISTS'
+			)
+		);
+		
+		// Order by version update timestamp, most recent first
+		$args['meta_key'] = '_game_version_updated';
+		$args['orderby'] = 'meta_value_num';
+		$args['order'] = 'DESC';
+	}
+	
+	return $args;
+}
+

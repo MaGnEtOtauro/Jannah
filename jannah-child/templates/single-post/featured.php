@@ -78,9 +78,12 @@ if( $post_format == 'standard' ) {
 							<?php endif; ?>
 						</div>
 						
-						<div class="game-details-badges">
-							<span class="badge secure"><i class="fa fa-shield" aria-hidden="true"></i> Virus Free</span>
-							<span class="badge tested"><i class="fa fa-check-circle" aria-hidden="true"></i> Tested & Working</span>
+						<div class="game-download-quick-action">
+							<a href="#game-download-section" class="quick-download-btn" data-smooth-scroll="true">
+								<i class="fa fa-download" aria-hidden="true"></i>
+								<span>Download Now</span>
+								<i class="fa fa-angle-down" aria-hidden="true"></i>
+							</a>
 						</div>
 					</div>
 				</div>
