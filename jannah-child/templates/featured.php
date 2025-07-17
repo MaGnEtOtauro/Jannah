@@ -328,7 +328,7 @@ if( ! empty( $slider_settings ) ){
 						// Get the bakground image
 						// Testing preloading first slider images
 						// $background = $is_lazyload ? 'data-lazy="'. tie_thumb_src( $image_size ) .'"' : 'style="'. tie_thumb_src_bg( $image_size ) .'"';
-						$the_image = tie_thumb_src( $image_size );
+						$the_image = get_custom_slider_image( $slider_post_id, $image_size, $slider );
 
 						if( $is_lazyload ){
 							$background = 'data-lazy="'. $the_image .'"';

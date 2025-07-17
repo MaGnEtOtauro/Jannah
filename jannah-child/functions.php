@@ -800,6 +800,80 @@ function save_game_details_meta_box_data( $post_id ) {
 }
 
 // =====================================================
+// CUSTOM SLIDER IMAGE FUNCTION
+// =====================================================
+
+// Custom function to get slider image (poster for slider 7, featured image for others)
+function get_custom_slider_image( $post_id, $image_size, $slider_number ) {
+	// Only use poster image for slider 7
+	if ( $slider_number == 7 ) {
+		// Get the game poster image ID
+		$poster_image_id = get_post_meta( $post_id, '_game_poster_image_id', true );
+		
+		// If poster image exists, use it with optimized sizing
+		if ( $poster_image_id ) {
+			// Try to get a properly sized version of the poster image
+			// Use custom slider poster sizes first, then fall back to standard sizes
+			$poster_sizes = array( 'slider-poster-large', 'slider-poster', 'medium_large', 'large', 'full' );
+			
+			foreach ( $poster_sizes as $size ) {
+				$poster_image = wp_get_attachment_image_src( $poster_image_id, $size );
+				if ( ! empty( $poster_image[0] ) ) {
+					return $poster_image[0];
+				}
+			}
+		}
+	}
+	
+	// Fall back to featured image for all other cases
+	$original_post = $GLOBALS['post'];
+	$GLOBALS['post'] = get_post( $post_id );
+	setup_postdata( $GLOBALS['post'] );
+	
+	$featured_image = tie_thumb_src( $image_size );
+	
+	$GLOBALS['post'] = $original_post;
+	setup_postdata( $original_post );
+	
+	return $featured_image;
+}
+
+// Register custom image size for slider posters
+add_action( 'after_setup_theme', 'register_slider_poster_sizes' );
+function register_slider_poster_sizes() {
+	// Add custom image size for slider 7 poster images
+	// This will crop the 600x900 poster to fit better in the slider
+	add_image_size( 'slider-poster', 400, 300, true ); // Hard crop to maintain aspect ratio
+	add_image_size( 'slider-poster-large', 500, 375, true );
+}
+
+// Function to regenerate thumbnails for existing poster images
+function regenerate_poster_thumbnails() {
+	// Get all posts with poster images
+	$posts_with_posters = get_posts( array(
+		'post_type' => 'post',
+		'meta_query' => array(
+			array(
+				'key' => '_game_poster_image_id',
+				'compare' => 'EXISTS'
+			)
+		),
+		'posts_per_page' => -1
+	) );
+	
+	foreach ( $posts_with_posters as $post ) {
+		$poster_image_id = get_post_meta( $post->ID, '_game_poster_image_id', true );
+		if ( $poster_image_id ) {
+			// Regenerate thumbnails for this image
+			wp_update_attachment_metadata( $poster_image_id, wp_generate_attachment_metadata( $poster_image_id, get_attached_file( $poster_image_id ) ) );
+		}
+	}
+}
+
+// Hook to regenerate thumbnails when the theme is activated or updated
+add_action( 'after_switch_theme', 'regenerate_poster_thumbnails' );
+
+// =====================================================
 // RECENT UPDATES FUNCTIONALITY
 // =====================================================
 

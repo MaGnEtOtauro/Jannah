@@ -727,3 +727,46 @@
     }
 }
 
+/* =====================================================
+   SLIDER 7 POSTER IMAGE OPTIMIZATION
+   ===================================================== */
+
+/* Slider 7 - Boxed Four Taller Slider - Poster Image Handling */
+.boxed-four-taller-slider .slide {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Ensure poster images fill the slider area properly */
+.boxed-four-taller-slider .slide .slide-link {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Optimize slider dimensions for poster images */
+.boxed-four-taller-slider .slide {
+    min-height: 250px !important;
+}
+
+/* Make sure the slider items maintain aspect ratio */
+.boxed-four-taller-slider .slider-item {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Responsive adjustments for poster images in slider */
+@media (max-width: 768px) {
+    .boxed-four-taller-slider .slide {
+        min-height: 200px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .boxed-four-taller-slider .slide {
+        min-height: 180px !important;
+    }
+}
+
