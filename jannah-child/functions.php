@@ -849,6 +849,11 @@ function register_slider_poster_sizes() {
 
 // Function to regenerate thumbnails for existing poster images
 function regenerate_poster_thumbnails() {
+	// Make sure image functions are available
+	if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+	}
+	
 	// Get all posts with poster images
 	$posts_with_posters = get_posts( array(
 		'post_type' => 'post',
