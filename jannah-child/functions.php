@@ -416,17 +416,75 @@ function add_download_section_to_content( $content ) {
 		return $content;
 	}
 	
-	// Generate download section HTML
-	$download_section = generate_download_section_html( $download_buttons );
+	// Generate download section HTML with requirements
+	$download_section = generate_download_section_html( $download_buttons, get_the_ID() );
 	
 	// Append download section to content
 	return $content . $download_section;
 }
 
 // Generate Download Section HTML
-function generate_download_section_html( $download_buttons ) {
+function generate_download_section_html( $download_buttons, $post_id = null ) {
+	// Get requirements data
+	$minimum_requirements = $post_id ? get_post_meta( $post_id, '_game_minimum_requirements', true ) : '';
+	$recommended_requirements = $post_id ? get_post_meta( $post_id, '_game_recommended_requirements', true ) : '';
+	
 	ob_start();
 	?>
+	<?php if ( $minimum_requirements || $recommended_requirements ) : ?>
+	<div class="container-wrapper game-requirements-section">
+		<div class="requirements-display-wrapper">
+			<?php if ( $minimum_requirements ) : ?>
+			<div class="requirements-display-column">
+				<div class="widget-title">
+					<h4 class="requirements-title" style="font-size: 15px !important; white-space: nowrap !important; display: flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; font-weight: 700 !important;">
+						<span class="tie-icon-desktop" aria-hidden="true"></span>
+						Minimum System Requirements
+					</h4>
+				</div>
+				<div class="requirements-content">
+					<?php 
+					$lines = explode("\n", trim($minimum_requirements));
+					echo '<ul class="requirements-list" style="list-style: none !important; margin: 0 !important; padding: 0 !important;">';
+					foreach ($lines as $line) {
+						$line = trim($line);
+						if (!empty($line)) {
+							echo '<li>' . esc_html($line) . '</li>';
+						}
+					}
+					echo '</ul>';
+					?>
+				</div>
+			</div>
+			<?php endif; ?>
+			
+			<?php if ( $recommended_requirements ) : ?>
+			<div class="requirements-display-column">
+				<div class="widget-title">
+					<h4 class="requirements-title" style="font-size: 15px !important; white-space: nowrap !important; display: flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; font-weight: 700 !important;">
+						<span class="tie-icon-cogs" aria-hidden="true"></span>
+						Recommended System Requirements
+					</h4>
+				</div>
+				<div class="requirements-content">
+					<?php 
+					$lines = explode("\n", trim($recommended_requirements));
+					echo '<ul class="requirements-list" style="list-style: none !important; margin: 0 !important; padding: 0 !important;">';
+					foreach ($lines as $line) {
+						$line = trim($line);
+						if (!empty($line)) {
+							echo '<li>' . esc_html($line) . '</li>';
+						}
+					}
+					echo '</ul>';
+					?>
+				</div>
+			</div>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php endif; ?>
+	
 	<div class="container-wrapper game-download-section" id="game-download-section">
 		<div class="widget-title">
 			<h4 class="main-title">
@@ -515,6 +573,19 @@ function add_game_details_meta_box() {
 		'game_details_meta_box',
 		'🎮 Game Details & Poster',
 		'game_details_meta_box_callback',
+		'post',
+		'normal',
+		'high'
+	);
+}
+
+// Add System Requirements and Installation Instructions Meta Box
+add_action( 'add_meta_boxes', 'add_game_requirements_meta_box' );
+function add_game_requirements_meta_box() {
+	add_meta_box(
+		'game_requirements_meta_box',
+		'📋 System Requirements & Installation Instructions',
+		'game_requirements_meta_box_callback',
 		'post',
 		'normal',
 		'high'
@@ -747,6 +818,94 @@ function game_details_meta_box_callback( $post ) {
 	<?php
 }
 
+// Game Requirements Meta Box Callback
+function game_requirements_meta_box_callback( $post ) {
+	// Add nonce for security
+	wp_nonce_field( 'game_requirements_meta_box', 'game_requirements_meta_box_nonce' );
+	
+	// Get existing values
+	$minimum_requirements = get_post_meta( $post->ID, '_game_minimum_requirements', true );
+	$recommended_requirements = get_post_meta( $post->ID, '_game_recommended_requirements', true );
+	
+	?>
+	<div id="game-requirements-container">
+		<style>
+		#game-requirements-container {
+			padding: 20px;
+			background: #f9f9f9;
+			border-radius: 8px;
+			margin: 10px 0;
+		}
+		.requirements-wrapper {
+			display: flex;
+			gap: 20px;
+			margin-top: 15px;
+		}
+		.requirements-column {
+			flex: 1;
+			background: white;
+			border: 1px solid #ddd;
+			border-radius: 6px;
+			padding: 20px;
+		}
+		.requirements-column h4 {
+			margin-top: 0;
+			color: #23282d;
+			border-bottom: 1px solid #eee;
+			padding-bottom: 10px;
+			font-size: 16px;
+		}
+		.requirements-column textarea {
+			width: 100%;
+			min-height: 300px;
+			padding: 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-family: monospace;
+			font-size: 13px;
+			resize: vertical;
+		}
+		.requirements-column textarea:focus {
+			border-color: #0073aa;
+			outline: none;
+			box-shadow: 0 0 3px rgba(0,115,170,0.3);
+		}
+		.field-description {
+			color: #666;
+			font-size: 13px;
+			margin-top: 5px;
+			font-style: italic;
+		}
+		@media (max-width: 1200px) {
+			.requirements-wrapper {
+				flex-direction: column;
+			}
+		}
+		</style>
+		
+		<div class="requirements-wrapper">
+			<div class="requirements-column">
+				<h4>💻 Minimum System Requirements</h4>
+				<textarea 
+					name="game_minimum_requirements" 
+					id="game_minimum_requirements"
+					placeholder="OS: Windows 10&#10;Processor: Intel Core i5&#10;Memory: 8 GB RAM&#10;Graphics: NVIDIA GTX 1060&#10;Storage: 50 GB available space"><?php echo esc_textarea( $minimum_requirements ); ?></textarea>
+				<p class="field-description">Enter the minimum system requirements</p>
+			</div>
+			
+			<div class="requirements-column">
+				<h4>⚡ Recommended System Requirements</h4>
+				<textarea 
+					name="game_recommended_requirements" 
+					id="game_recommended_requirements"
+					placeholder="OS: Windows 11&#10;Processor: Intel Core i7&#10;Memory: 16 GB RAM&#10;Graphics: NVIDIA RTX 2070&#10;Storage: 50 GB available space"><?php echo esc_textarea( $recommended_requirements ); ?></textarea>
+				<p class="field-description">Enter the recommended system requirements</p>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
 // Save Game Details Meta Box Data
 add_action( 'save_post', 'save_game_details_meta_box_data' );
 function save_game_details_meta_box_data( $post_id ) {
@@ -796,6 +955,36 @@ function save_game_details_meta_box_data( $post_id ) {
 			
 			update_post_meta( $post_id, $meta_key, $new_value );
 		}
+	}
+}
+
+// Save Game Requirements Meta Box Data
+add_action( 'save_post', 'save_game_requirements_meta_box_data' );
+function save_game_requirements_meta_box_data( $post_id ) {
+	// Check if nonce is valid
+	if ( ! isset( $_POST['game_requirements_meta_box_nonce'] ) || 
+		 ! wp_verify_nonce( $_POST['game_requirements_meta_box_nonce'], 'game_requirements_meta_box' ) ) {
+		return;
+	}
+	
+	// Check if user has permission to edit post
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	
+	// Check if autosave
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	
+	// Save minimum requirements
+	if ( isset( $_POST['game_minimum_requirements'] ) ) {
+		update_post_meta( $post_id, '_game_minimum_requirements', wp_kses_post( $_POST['game_minimum_requirements'] ) );
+	}
+	
+	// Save recommended requirements
+	if ( isset( $_POST['game_recommended_requirements'] ) ) {
+		update_post_meta( $post_id, '_game_recommended_requirements', wp_kses_post( $_POST['game_recommended_requirements'] ) );
 	}
 }
 
