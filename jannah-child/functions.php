@@ -411,8 +411,13 @@ function add_download_section_to_content( $content ) {
 	// Get download buttons for current post
 	$download_buttons = get_post_meta( get_the_ID(), '_download_buttons', true );
 	
-	// If no download buttons, return original content
-	if ( empty( $download_buttons ) || ! is_array( $download_buttons ) ) {
+	// Get requirements data
+	$minimum_requirements = get_post_meta( get_the_ID(), '_game_minimum_requirements', true );
+	$recommended_requirements = get_post_meta( get_the_ID(), '_game_recommended_requirements', true );
+	
+	// If no download buttons and no requirements, return original content
+	if ( ( empty( $download_buttons ) || ! is_array( $download_buttons ) ) && 
+	     empty( $minimum_requirements ) && empty( $recommended_requirements ) ) {
 		return $content;
 	}
 	
@@ -485,6 +490,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	</div>
 	<?php endif; ?>
 	
+	<?php if ( ! empty( $download_buttons ) && is_array( $download_buttons ) ) : ?>
 	<div class="container-wrapper game-download-section" id="game-download-section">
 		<div class="widget-title">
 			<h4 class="main-title">
@@ -522,6 +528,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 			</div>
 		</div>
 	</div>
+	<?php endif; ?>
 	<?php
 	return ob_get_clean();
 }
