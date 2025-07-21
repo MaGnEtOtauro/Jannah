@@ -728,10 +728,10 @@
 }
 
 /* =====================================================
-   SLIDER 7 POSTER IMAGE OPTIMIZATION
+   SLIDER 7 HORIZONTAL IMAGE OPTIMIZATION
    ===================================================== */
 
-/* Slider 7 - Boxed Four Taller Slider - Poster Image Handling */
+/* Slider 7 - Horizontal Layout with Hard-Cropped Images */
 .boxed-four-taller-slider .slide {
     background-size: cover !important;
     background-position: center !important;
@@ -739,9 +739,10 @@
     min-height: 300px !important;
     position: relative !important;
     overflow: hidden !important;
+    aspect-ratio: 3/2 !important; /* Match our 600x400 image ratio */
 }
 
-/* Ensure poster images fill the slider area properly */
+/* Display horizontal cropped images properly */
 .boxed-four-taller-slider .slide .slide-link {
     background-size: cover !important;
     background-position: center !important;
@@ -754,16 +755,17 @@
     left: 0 !important;
 }
 
-/* Make sure the slider items maintain aspect ratio */
+/* Slider items with horizontal format */
 .boxed-four-taller-slider .slider-item {
     background-size: cover !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     width: 100% !important;
     height: 100% !important;
+    aspect-ratio: 3/2 !important; /* Match 600x400 ratio */
 }
 
-/* Poster image specific optimization */
+/* Horizontal image display */
 .boxed-four-taller-slider .slide img {
     width: 100% !important;
     height: 100% !important;

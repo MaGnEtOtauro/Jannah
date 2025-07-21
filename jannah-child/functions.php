@@ -953,9 +953,11 @@ function save_game_details_meta_box_data( $post_id ) {
 			// Special handling for game version to track changes
 			if ( $field_name === 'game_version' ) {
 				$old_value = get_post_meta( $post_id, $meta_key, true );
+				$post_status = get_post_status( $post_id );
 				
-				// If version has changed, update the version change timestamp
-				if ( $old_value !== $new_value && !empty( $new_value ) ) {
+				// Only track version updates for published posts that already had a version
+				// This prevents newly published posts from appearing in Recent Updates
+				if ( $old_value !== $new_value && !empty( $new_value ) && !empty( $old_value ) && $post_status === 'publish' ) {
 					update_post_meta( $post_id, '_game_version_updated', current_time( 'timestamp' ) );
 				}
 			}
@@ -1009,8 +1011,8 @@ function get_custom_slider_image( $post_id, $image_size, $slider_number ) {
 		// If poster image exists, use it with optimized sizing
 		if ( $poster_image_id ) {
 			// Try to get a properly sized version of the poster image
-			// Use custom slider poster sizes first, then fall back to standard sizes
-			$poster_sizes = array( 'slider-poster-large', 'slider-poster', 'medium_large', 'large', 'full' );
+			// Use custom horizontal slider sizes first, prioritize our custom sizes
+			$poster_sizes = array( 'slider-poster-large', 'slider-poster', 'slider-horizontal', 'large', 'full' );
 			
 			foreach ( $poster_sizes as $size ) {
 				$poster_image = wp_get_attachment_image_src( $poster_image_id, $size );
@@ -1037,11 +1039,13 @@ function get_custom_slider_image( $post_id, $image_size, $slider_number ) {
 // Register custom image size for slider posters
 add_action( 'after_setup_theme', 'register_slider_poster_sizes' );
 function register_slider_poster_sizes() {
-	// Add custom image size for slider 7 poster images
-	// This will crop the 600x900 poster to fit better in the slider
-	add_image_size( 'slider-poster', 400, 300, true ); // Hard crop to maintain aspect ratio
-	add_image_size( 'slider-poster-large', 500, 375, true );
+	// Add custom image size for slider 7 - smart cropping for complete container fill
+	// Using array for center cropping to minimize loss of important content
+	add_image_size( 'slider-poster', 600, 400, array( 'center', 'center' ) ); // Smart center crop
+	add_image_size( 'slider-poster-large', 800, 533, array( 'center', 'center' ) ); // Smart center crop
+	add_image_size( 'slider-horizontal', 480, 320, array( 'center', 'center' ) ); // Smart center crop
 }
+
 
 // Function to regenerate thumbnails for existing poster images
 function regenerate_poster_thumbnails() {
