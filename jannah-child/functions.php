@@ -424,7 +424,7 @@ function add_download_section_to_content( $content ) {
 	// Generate download section HTML with requirements
 	$download_section = generate_download_section_html( $download_buttons, get_the_ID() );
 	
-	// Append download section to content
+	// Append download section to content (no separator after main content)
 	return $content . $download_section;
 }
 
@@ -457,6 +457,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	?>
 	<?php if ( ! empty( $dlcs ) ) : ?>
 		<?php echo generate_dlc_accordion_html( $dlcs, $is_open ); ?>
+		<hr class="section-separator dlc-separator">
 	<?php endif; ?>
 	
 	<?php if ( $minimum_requirements || $recommended_requirements ) : ?>
@@ -511,6 +512,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 			<?php endif; ?>
 		</div>
 	</div>
+	<hr class="section-separator requirements-separator">
 	<?php endif; ?>
 	
 	<?php if ( ! empty( $download_buttons ) && is_array( $download_buttons ) ) : ?>
@@ -1361,6 +1363,36 @@ function generate_dlc_accordion_html( $dlcs, $is_open = false ) {
 	<style>
 	.dlc-accordion-section {
 		margin: 30px 0;
+	}
+	
+	/* Section Separators */
+	.section-separator {
+		border: none;
+		height: 1px;
+		background: #e1e5e9;
+		margin: 40px 0;
+	}
+	
+	/* Dark mode separators */
+	body.tie-dark-mode .section-separator,
+	html.tie-dark-mode .section-separator,
+	.tie-dark-mode .section-separator,
+	body[data-theme="dark"] .section-separator,
+	html[data-theme="dark"] .section-separator,
+	[data-theme="dark"] .section-separator,
+	body.dark-mode .section-separator,
+	html.dark-mode .section-separator,
+	.dark-mode .section-separator,
+	body[class*="dark"] .section-separator,
+	html[class*="dark"] .section-separator {
+		background: rgba(255,255,255,0.15);
+	}
+	
+	/* Responsive separators */
+	@media (max-width: 768px) {
+		.section-separator {
+			margin: 30px 0;
+		}
 	}
 	
 	.dlc-accordion {
