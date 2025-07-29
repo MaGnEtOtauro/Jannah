@@ -434,8 +434,31 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	$minimum_requirements = $post_id ? get_post_meta( $post_id, '_game_minimum_requirements', true ) : '';
 	$recommended_requirements = $post_id ? get_post_meta( $post_id, '_game_recommended_requirements', true ) : '';
 	
+	// Get DLC data
+	$dlc_list = $post_id ? get_post_meta( $post_id, '_game_dlc_list', true ) : '';
+	$dlcs = array();
+	if ( ! empty( $dlc_list ) ) {
+		$dlcs = array_filter( array_map( 'trim', explode( "\n", $dlc_list ) ) );
+	}
+	
+	// Get accordion settings
+	$accordion_state = $post_id ? get_post_meta( $post_id, '_game_dlc_accordion_state', true ) : 'auto';
+	$auto_threshold = $post_id ? get_post_meta( $post_id, '_game_dlc_auto_threshold', true ) : 5;
+	
+	// Determine if accordion should be open
+	$is_open = false;
+	if ( $accordion_state === 'open' ) {
+		$is_open = true;
+	} elseif ( $accordion_state === 'auto' && count( $dlcs ) <= $auto_threshold ) {
+		$is_open = true;
+	}
+	
 	ob_start();
 	?>
+	<?php if ( ! empty( $dlcs ) ) : ?>
+		<?php echo generate_dlc_accordion_html( $dlcs, $is_open ); ?>
+	<?php endif; ?>
+	
 	<?php if ( $minimum_requirements || $recommended_requirements ) : ?>
 	<div class="container-wrapper game-requirements-section">
 		<div class="requirements-display-wrapper">
@@ -1110,5 +1133,630 @@ function filter_recent_updates_query( $args, $block ) {
 	}
 	
 	return $args;
+}
+
+// =====================================================
+// DLC ACCORDION FUNCTIONALITY
+// =====================================================
+
+// Add DLC Meta Box above Download Section
+add_action( 'add_meta_boxes', 'add_dlc_meta_box', 5 ); // Priority 5 to appear before Download section
+function add_dlc_meta_box() {
+	add_meta_box(
+		'dlc_accordion_meta_box',
+		'🎯 DLC Accordion Settings',
+		'dlc_accordion_meta_box_callback',
+		'post',
+		'normal',
+		'high'
+	);
+}
+
+// DLC Meta Box Callback
+function dlc_accordion_meta_box_callback( $post ) {
+	// Add nonce for security
+	wp_nonce_field( 'dlc_accordion_meta_box', 'dlc_accordion_meta_box_nonce' );
+	
+	// Get existing values
+	$dlc_list = get_post_meta( $post->ID, '_game_dlc_list', true );
+	$accordion_state = get_post_meta( $post->ID, '_game_dlc_accordion_state', true );
+	$auto_threshold = get_post_meta( $post->ID, '_game_dlc_auto_threshold', true );
+	
+	// Set defaults
+	if ( empty( $accordion_state ) ) {
+		$accordion_state = 'auto';
+	}
+	if ( empty( $auto_threshold ) ) {
+		$auto_threshold = 5;
+	}
+	
+	?>
+	<div id="dlc-accordion-container">
+		<style>
+		#dlc-accordion-container {
+			padding: 20px;
+			background: #f9f9f9;
+			border-radius: 8px;
+			margin: 10px 0;
+		}
+		.dlc-field-group {
+			background: white;
+			border: 1px solid #ddd;
+			border-radius: 6px;
+			padding: 20px;
+			margin-bottom: 15px;
+		}
+		.dlc-field-group h4 {
+			margin-top: 0;
+			color: #23282d;
+			border-bottom: 1px solid #eee;
+			padding-bottom: 10px;
+			font-size: 16px;
+		}
+		.dlc-field {
+			margin-bottom: 15px;
+		}
+		.dlc-field label {
+			display: block;
+			font-weight: 600;
+			margin-bottom: 5px;
+			color: #333;
+		}
+		.dlc-field textarea {
+			width: 100%;
+			min-height: 200px;
+			padding: 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+			font-size: 14px;
+			resize: vertical;
+		}
+		.dlc-field textarea:focus {
+			border-color: #0073aa;
+			outline: none;
+			box-shadow: 0 0 3px rgba(0,115,170,0.3);
+		}
+		.dlc-field select, .dlc-field input[type="number"] {
+			padding: 8px 12px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+		}
+		.dlc-field select:focus, .dlc-field input[type="number"]:focus {
+			border-color: #0073aa;
+			outline: none;
+			box-shadow: 0 0 3px rgba(0,115,170,0.3);
+		}
+		.dlc-field-hint {
+			color: #666;
+			font-size: 13px;
+			margin-top: 5px;
+			font-style: italic;
+		}
+		.dlc-settings-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 20px;
+		}
+		@media (max-width: 768px) {
+			.dlc-settings-row {
+				grid-template-columns: 1fr;
+			}
+		}
+		</style>
+		
+		<div class="dlc-field-group">
+			<h4>📋 DLC List</h4>
+			<div class="dlc-field">
+				<label for="game_dlc_list">Enter DLCs (one per line):</label>
+				<textarea 
+					name="game_dlc_list" 
+					id="game_dlc_list"
+					placeholder="Example:&#10;Season Pass&#10;Weapon Pack: Elite Arsenal&#10;Map Pack: Desert Storm&#10;Character Skin: Ghost Operator&#10;Bonus Mission: Night Raid"><?php echo esc_textarea( $dlc_list ); ?></textarea>
+				<p class="dlc-field-hint">Each line will be displayed as a bullet point in the accordion</p>
+			</div>
+		</div>
+		
+		<div class="dlc-field-group">
+			<h4>⚙️ Display Settings</h4>
+			<div class="dlc-settings-row">
+				<div class="dlc-field">
+					<label for="game_dlc_accordion_state">Accordion Default State:</label>
+					<select name="game_dlc_accordion_state" id="game_dlc_accordion_state">
+						<option value="auto" <?php selected( $accordion_state, 'auto' ); ?>>Auto (based on DLC count)</option>
+						<option value="closed" <?php selected( $accordion_state, 'closed' ); ?>>Always Closed</option>
+						<option value="open" <?php selected( $accordion_state, 'open' ); ?>>Always Open</option>
+					</select>
+					<p class="dlc-field-hint">Control whether the accordion is open or closed by default</p>
+				</div>
+				
+				<div class="dlc-field">
+					<label for="game_dlc_auto_threshold">Auto-close Threshold:</label>
+					<input 
+						type="number" 
+						name="game_dlc_auto_threshold" 
+						id="game_dlc_auto_threshold"
+						value="<?php echo esc_attr( $auto_threshold ); ?>"
+						min="1"
+						max="50"
+						style="width: 100px;">
+					<p class="dlc-field-hint">When using Auto mode, accordion closes if DLCs exceed this number</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+// Save DLC Meta Box Data
+add_action( 'save_post', 'save_dlc_meta_box_data' );
+function save_dlc_meta_box_data( $post_id ) {
+	// Check if nonce is valid
+	if ( ! isset( $_POST['dlc_accordion_meta_box_nonce'] ) || 
+		 ! wp_verify_nonce( $_POST['dlc_accordion_meta_box_nonce'], 'dlc_accordion_meta_box' ) ) {
+		return;
+	}
+	
+	// Check if user has permission to edit post
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	
+	// Check if autosave
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	
+	// Save DLC list
+	if ( isset( $_POST['game_dlc_list'] ) ) {
+		update_post_meta( $post_id, '_game_dlc_list', sanitize_textarea_field( $_POST['game_dlc_list'] ) );
+	}
+	
+	// Save accordion state
+	if ( isset( $_POST['game_dlc_accordion_state'] ) ) {
+		update_post_meta( $post_id, '_game_dlc_accordion_state', sanitize_text_field( $_POST['game_dlc_accordion_state'] ) );
+	}
+	
+	// Save auto threshold
+	if ( isset( $_POST['game_dlc_auto_threshold'] ) ) {
+		update_post_meta( $post_id, '_game_dlc_auto_threshold', absint( $_POST['game_dlc_auto_threshold'] ) );
+	}
+}
+
+// Remove the old DLC content filter since we'll display it differently
+// DLC accordion is now displayed through the generate_download_section_html function
+
+// Generate DLC Accordion HTML
+function generate_dlc_accordion_html( $dlcs, $is_open = false ) {
+	$dlc_count = count( $dlcs );
+	$accordion_class = $is_open ? 'dlc-accordion open' : 'dlc-accordion';
+	$content_style = $is_open ? '' : 'style="display: none;"';
+	
+	ob_start();
+	?>
+	<div class="container-wrapper dlc-accordion-section">
+		<div class="<?php echo esc_attr( $accordion_class ); ?>" id="dlc-accordion">
+		<div class="dlc-accordion-header" onclick="toggleDLCAccordion()">
+			<div class="dlc-header-content">
+				<h3 class="dlc-title">Included DLCs</h3>
+				<span class="dlc-count">(<?php echo $dlc_count; ?> DLC<?php echo $dlc_count > 1 ? 's' : ''; ?>)</span>
+			</div>
+			<span class="dlc-toggle-icon">
+				<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</span>
+		</div>
+		<div class="dlc-accordion-content" <?php echo $content_style; ?>>
+			<ul class="dlc-list">
+				<?php foreach ( $dlcs as $dlc ): ?>
+					<li><?php echo esc_html( $dlc ); ?></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+	</div>
+	</div>
+	
+	<style>
+	.dlc-accordion-section {
+		margin: 30px 0;
+	}
+	
+	.dlc-accordion {
+		background: #f8f9fa;
+		border: 1px solid #e9ecef;
+		border-radius: 8px;
+		margin: 0;
+		overflow: hidden;
+		transition: all 0.3s ease;
+	}
+	
+	.dlc-accordion:hover {
+		border-color: #d1d5db;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	}
+	
+	.dlc-accordion-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 20px;
+		cursor: pointer;
+		user-select: none;
+		background: white;
+		border-bottom: 1px solid #e9ecef;
+		transition: background-color 0.2s ease;
+	}
+	
+	.dlc-accordion-header:hover {
+		background-color: #f8f9fa;
+	}
+	
+	.dlc-header-content {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	
+	.dlc-icon {
+		font-size: 24px;
+		line-height: 1;
+	}
+	
+	.dlc-title {
+		margin: 0;
+		font-size: 18px;
+		font-weight: 600;
+		color: #2c3e50;
+	}
+	
+	.dlc-count {
+		color: #6c757d;
+		font-size: 14px;
+		font-weight: normal;
+	}
+	
+	.dlc-toggle-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		background: #f1f3f5;
+		border-radius: 50%;
+		transition: all 0.3s ease;
+		color: #6c757d;
+	}
+	
+	.dlc-accordion.open .dlc-toggle-icon {
+		transform: rotate(180deg);
+		background: #e9ecef;
+	}
+	
+	.dlc-accordion-content {
+		padding: 0;
+		background: white;
+		overflow: hidden;
+		transition: all 0.3s ease;
+	}
+	
+	/* Force dark mode styles with highest specificity */
+	body.tie-dark-mode .dlc-accordion-header,
+	.tie-dark-mode .dlc-accordion-header,
+	[data-dark-mode="true"] .dlc-accordion-header {
+		background: rgba(255,255,255,0.1) !important;
+		border-bottom-color: #333 !important;
+	}
+	
+	body.tie-dark-mode .dlc-accordion-header:hover,
+	.tie-dark-mode .dlc-accordion-header:hover,
+	[data-dark-mode="true"] .dlc-accordion-header:hover {
+		background-color: #2a2a2a !important;
+	}
+	
+	body.tie-dark-mode .dlc-title,
+	.tie-dark-mode .dlc-title,
+	[data-dark-mode="true"] .dlc-title {
+		color: #ffffff !important;
+	}
+	
+	body.tie-dark-mode .dlc-count,
+	.tie-dark-mode .dlc-count,
+	[data-dark-mode="true"] .dlc-count {
+		color: #cccccc !important;
+	}
+	
+	body.tie-dark-mode .dlc-accordion-content,
+	.tie-dark-mode .dlc-accordion-content,
+	[data-dark-mode="true"] .dlc-accordion-content {
+		background: rgba(255,255,255,0.1) !important;
+	}
+	
+	.dlc-list {
+		list-style: none !important;
+		margin: 0;
+		padding: 20px;
+		columns: 2;
+		column-gap: 30px;
+	}
+	
+	.dlc-list li {
+		position: relative;
+		padding-left: 24px;
+		margin-bottom: 10px;
+		color: #495057;
+		break-inside: avoid;
+		page-break-inside: avoid;
+		list-style: none !important;
+	}
+	
+	.dlc-list li:before {
+		content: "•";
+		position: absolute;
+		left: 0;
+		color: #007bff;
+		font-weight: bold;
+		font-size: 20px;
+		line-height: 1;
+	}
+	
+	/* Responsive design */
+	@media (max-width: 768px) {
+		.dlc-list {
+			columns: 1;
+		}
+		
+		.dlc-header-content {
+			gap: 8px;
+		}
+		
+		.dlc-icon {
+			font-size: 20px;
+		}
+		
+		.dlc-title {
+			font-size: 16px;
+		}
+		
+		.dlc-count {
+			font-size: 12px;
+		}
+	}
+	
+	/* ULTRA AGGRESSIVE DARK MODE TARGETING */
+	
+	/* Main accordion container - ALL possible selectors */
+	body.tie-dark-mode .container-wrapper .dlc-accordion,
+	html.tie-dark-mode .container-wrapper .dlc-accordion,
+	.tie-dark-mode .container-wrapper .dlc-accordion,
+	body.tie-dark-mode .dlc-accordion-section .dlc-accordion,
+	html.tie-dark-mode .dlc-accordion-section .dlc-accordion,
+	.tie-dark-mode .dlc-accordion-section .dlc-accordion,
+	body.tie-dark-mode .dlc-accordion,
+	html.tie-dark-mode .dlc-accordion,
+	.tie-dark-mode .dlc-accordion,
+	body[data-theme="dark"] .dlc-accordion,
+	html[data-theme="dark"] .dlc-accordion,
+	[data-theme="dark"] .dlc-accordion,
+	body.dark-mode .dlc-accordion,
+	html.dark-mode .dlc-accordion,
+	.dark-mode .dlc-accordion,
+	body[class*="dark"] .dlc-accordion,
+	html[class*="dark"] .dlc-accordion {
+		background: rgba(255,255,255,0.1) !important;
+		border-color: rgba(255,255,255,0.2) !important;
+	}
+	
+	/* Accordion header - ALL possible selectors */
+	body.tie-dark-mode .container-wrapper .dlc-accordion-header,
+	html.tie-dark-mode .container-wrapper .dlc-accordion-header,
+	.tie-dark-mode .container-wrapper .dlc-accordion-header,
+	body.tie-dark-mode .dlc-accordion-section .dlc-accordion-header,
+	html.tie-dark-mode .dlc-accordion-section .dlc-accordion-header,
+	.tie-dark-mode .dlc-accordion-section .dlc-accordion-header,
+	body.tie-dark-mode .dlc-accordion-header,
+	html.tie-dark-mode .dlc-accordion-header,
+	.tie-dark-mode .dlc-accordion-header,
+	body[data-theme="dark"] .dlc-accordion-header,
+	html[data-theme="dark"] .dlc-accordion-header,
+	[data-theme="dark"] .dlc-accordion-header,
+	body.dark-mode .dlc-accordion-header,
+	html.dark-mode .dlc-accordion-header,
+	.dark-mode .dlc-accordion-header,
+	body[class*="dark"] .dlc-accordion-header,
+	html[class*="dark"] .dlc-accordion-header {
+		background: rgba(255,255,255,0.1) !important;
+		border-bottom-color: rgba(255,255,255,0.2) !important;
+	}
+	
+	/* Title text - ALL possible selectors */
+	body.tie-dark-mode .container-wrapper .dlc-title,
+	html.tie-dark-mode .container-wrapper .dlc-title,
+	.tie-dark-mode .container-wrapper .dlc-title,
+	body.tie-dark-mode .dlc-accordion-section .dlc-title,
+	html.tie-dark-mode .dlc-accordion-section .dlc-title,
+	.tie-dark-mode .dlc-accordion-section .dlc-title,
+	body.tie-dark-mode .dlc-title,
+	html.tie-dark-mode .dlc-title,
+	.tie-dark-mode .dlc-title,
+	body[data-theme="dark"] .dlc-title,
+	html[data-theme="dark"] .dlc-title,
+	[data-theme="dark"] .dlc-title,
+	body.dark-mode .dlc-title,
+	html.dark-mode .dlc-title,
+	.dark-mode .dlc-title,
+	body[class*="dark"] .dlc-title,
+	html[class*="dark"] .dlc-title {
+		color: #ffffff !important;
+	}
+	
+	/* Count text - ALL possible selectors */
+	body.tie-dark-mode .container-wrapper .dlc-count,
+	html.tie-dark-mode .container-wrapper .dlc-count,
+	.tie-dark-mode .container-wrapper .dlc-count,
+	body.tie-dark-mode .dlc-accordion-section .dlc-count,
+	html.tie-dark-mode .dlc-accordion-section .dlc-count,
+	.tie-dark-mode .dlc-accordion-section .dlc-count,
+	body.tie-dark-mode .dlc-count,
+	html.tie-dark-mode .dlc-count,
+	.tie-dark-mode .dlc-count,
+	body[data-theme="dark"] .dlc-count,
+	html[data-theme="dark"] .dlc-count,
+	[data-theme="dark"] .dlc-count,
+	body.dark-mode .dlc-count,
+	html.dark-mode .dlc-count,
+	.dark-mode .dlc-count,
+	body[class*="dark"] .dlc-count,
+	html[class*="dark"] .dlc-count {
+		color: #cccccc !important;
+	}
+	
+	/* Content area - ALL possible selectors */
+	body.tie-dark-mode .container-wrapper .dlc-accordion-content,
+	html.tie-dark-mode .container-wrapper .dlc-accordion-content,
+	.tie-dark-mode .container-wrapper .dlc-accordion-content,
+	body.tie-dark-mode .dlc-accordion-section .dlc-accordion-content,
+	html.tie-dark-mode .dlc-accordion-section .dlc-accordion-content,
+	.tie-dark-mode .dlc-accordion-section .dlc-accordion-content,
+	body.tie-dark-mode .dlc-accordion-content,
+	html.tie-dark-mode .dlc-accordion-content,
+	.tie-dark-mode .dlc-accordion-content,
+	body[data-theme="dark"] .dlc-accordion-content,
+	html[data-theme="dark"] .dlc-accordion-content,
+	[data-theme="dark"] .dlc-accordion-content,
+	body.dark-mode .dlc-accordion-content,
+	html.dark-mode .dlc-accordion-content,
+	.dark-mode .dlc-accordion-content,
+	body[class*="dark"] .dlc-accordion-content,
+	html[class*="dark"] .dlc-accordion-content {
+		background: rgba(255,255,255,0.1) !important;
+	}
+	
+	/* List items - ALL possible selectors */
+	body.tie-dark-mode .container-wrapper .dlc-list li,
+	html.tie-dark-mode .container-wrapper .dlc-list li,
+	.tie-dark-mode .container-wrapper .dlc-list li,
+	body.tie-dark-mode .dlc-accordion-section .dlc-list li,
+	html.tie-dark-mode .dlc-accordion-section .dlc-list li,
+	.tie-dark-mode .dlc-accordion-section .dlc-list li,
+	body.tie-dark-mode .dlc-list li,
+	html.tie-dark-mode .dlc-list li,
+	.tie-dark-mode .dlc-list li,
+	body[data-theme="dark"] .dlc-list li,
+	html[data-theme="dark"] .dlc-list li,
+	[data-theme="dark"] .dlc-list li,
+	body.dark-mode .dlc-list li,
+	html.dark-mode .dlc-list li,
+	.dark-mode .dlc-list li,
+	body[class*="dark"] .dlc-list li,
+	html[class*="dark"] .dlc-list li {
+		color: #dddddd !important;
+	}
+	</style>
+	
+	<script>
+	function toggleDLCAccordion() {
+		var accordion = document.getElementById('dlc-accordion');
+		var content = accordion.querySelector('.dlc-accordion-content');
+		
+		if (accordion.classList.contains('open')) {
+			accordion.classList.remove('open');
+			content.style.display = 'none';
+		} else {
+			accordion.classList.add('open');
+			content.style.display = 'block';
+		}
+	}
+	
+	// ULTRA AGGRESSIVE dark mode styling enforcement
+	document.addEventListener('DOMContentLoaded', function() {
+		function applyDarkModeStyles() {
+			// Check EVERY possible dark mode indicator
+			var isDarkMode = document.body.classList.contains('tie-dark-mode') || 
+							document.documentElement.classList.contains('tie-dark-mode') ||
+							document.body.getAttribute('data-dark-mode') === 'true' ||
+							document.documentElement.getAttribute('data-dark-mode') === 'true' ||
+							document.body.getAttribute('data-theme') === 'dark' ||
+							document.documentElement.getAttribute('data-theme') === 'dark' ||
+							document.body.classList.contains('dark-mode') ||
+							document.documentElement.classList.contains('dark-mode') ||
+							window.getComputedStyle(document.body).backgroundColor.includes('rgb(30, 30, 30)') ||
+							window.getComputedStyle(document.body).backgroundColor.includes('rgb(26, 26, 26)');
+			
+			console.log('DLC Accordion: Dark mode detected:', isDarkMode);
+			
+			if (isDarkMode) {
+				var accordion = document.getElementById('dlc-accordion');
+				if (accordion) {
+					var header = accordion.querySelector('.dlc-accordion-header');
+					var content = accordion.querySelector('.dlc-accordion-content');
+					var title = accordion.querySelector('.dlc-title');
+					var count = accordion.querySelector('.dlc-count');
+					
+					console.log('DLC Accordion: Applying dark mode styles');
+					
+					// Force accordion container styles
+					accordion.style.setProperty('background', 'rgba(255,255,255,0.1)', 'important');
+					accordion.style.setProperty('border-color', 'rgba(255,255,255,0.2)', 'important');
+					
+					if (header) {
+						header.style.setProperty('background-color', 'rgba(255,255,255,0.1)', 'important');
+						header.style.setProperty('border-bottom-color', 'rgba(255,255,255,0.2)', 'important');
+					}
+					if (content) {
+						content.style.setProperty('background-color', 'rgba(255,255,255,0.1)', 'important');
+					}
+					if (title) {
+						title.style.setProperty('color', '#ffffff', 'important');
+						console.log('DLC Accordion: Title color set to white');
+					}
+					if (count) {
+						count.style.setProperty('color', '#cccccc', 'important');
+					}
+				}
+			}
+		}
+		
+		// Apply styles immediately
+		setTimeout(applyDarkModeStyles, 100);
+		
+		// Apply styles multiple times to catch dynamic loading
+		setTimeout(applyDarkModeStyles, 500);
+		setTimeout(applyDarkModeStyles, 1000);
+		setTimeout(applyDarkModeStyles, 2000);
+		
+		// Watch for theme changes with multiple observers
+		var observer = new MutationObserver(function(mutations) {
+			mutations.forEach(function(mutation) {
+				if (mutation.type === 'attributes') {
+					setTimeout(applyDarkModeStyles, 50);
+				}
+			});
+		});
+		
+		observer.observe(document.body, {
+			attributes: true,
+			subtree: true,
+			childList: true
+		});
+		
+		observer.observe(document.documentElement, {
+			attributes: true,
+			subtree: true,
+			childList: true
+		});
+		
+		// Also watch for window resize and scroll events
+		window.addEventListener('resize', applyDarkModeStyles);
+		window.addEventListener('scroll', applyDarkModeStyles);
+		window.addEventListener('load', applyDarkModeStyles);
+		
+		// Force check every 3 seconds
+		setInterval(applyDarkModeStyles, 3000);
+	});
+	</script>
+	<?php
+	return ob_get_clean();
 }
 
