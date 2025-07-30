@@ -34,10 +34,15 @@ function add_smooth_scroll_script() {
 				const targetElement = document.getElementById(targetId);
 				
 				if (targetElement) {
-					// Calculate offset for fixed headers
-					const offset = 20; // Adjust this value if needed
+					// Calculate offset to center the element in viewport
+					const viewportHeight = window.innerHeight;
+					const elementHeight = targetElement.offsetHeight;
+					const headerOffset = 80; // Account for any fixed headers/navigation
+					
+					// Calculate position to center the element
+					const centerOffset = (viewportHeight - elementHeight) / 2 - headerOffset;
 					const elementPosition = targetElement.getBoundingClientRect().top;
-					const offsetPosition = elementPosition + window.pageYOffset - offset;
+					const offsetPosition = elementPosition + window.pageYOffset - Math.max(centerOffset, 20);
 					
 					window.scrollTo({
 						top: offsetPosition,
@@ -47,11 +52,11 @@ function add_smooth_scroll_script() {
 					// Optional: Add a subtle flash effect to the target section
 					targetElement.style.transition = 'background-color 0.3s ease';
 					const originalBg = targetElement.style.backgroundColor;
-					targetElement.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
+					targetElement.style.backgroundColor = 'rgba(6, 105, 255, 0.08)';
 					
 					setTimeout(function() {
 						targetElement.style.backgroundColor = originalBg;
-					}, 500);
+					}, 800);
 				}
 			});
 		}
