@@ -411,16 +411,6 @@ function add_download_section_to_content( $content ) {
 	// Get download buttons for current post
 	$download_buttons = get_post_meta( get_the_ID(), '_download_buttons', true );
 	
-	// Get requirements data
-	$minimum_requirements = get_post_meta( get_the_ID(), '_game_minimum_requirements', true );
-	$recommended_requirements = get_post_meta( get_the_ID(), '_game_recommended_requirements', true );
-	
-	// If no download buttons and no requirements, return original content
-	if ( ( empty( $download_buttons ) || ! is_array( $download_buttons ) ) && 
-	     empty( $minimum_requirements ) && empty( $recommended_requirements ) ) {
-		return $content;
-	}
-	
 	// Generate download section HTML with requirements
 	$download_section = generate_download_section_html( $download_buttons, get_the_ID() );
 	
@@ -457,8 +447,10 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	?>
 	<?php if ( ! empty( $dlcs ) ) : ?>
 		<?php echo generate_dlc_accordion_html( $dlcs, $is_open ); ?>
-		<hr class="section-separator dlc-separator">
 	<?php endif; ?>
+	<!-- DLC SEPARATOR START -->
+	<hr class="section-separator dlc-separator">
+	<!-- DLC SEPARATOR END -->
 	
 	<?php if ( $minimum_requirements || $recommended_requirements ) : ?>
 	<div class="container-wrapper game-requirements-section">
@@ -512,8 +504,10 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 			<?php endif; ?>
 		</div>
 	</div>
-	<hr class="section-separator requirements-separator">
 	<?php endif; ?>
+	<!-- REQUIREMENTS SEPARATOR START -->
+	<hr class="section-separator requirements-separator">
+	<!-- REQUIREMENTS SEPARATOR END -->
 	
 	<?php if ( ! empty( $download_buttons ) && is_array( $download_buttons ) ) : ?>
 	<div class="container-wrapper game-download-section" id="game-download-section">
@@ -554,6 +548,271 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		</div>
 	</div>
 	<?php endif; ?>
+	
+	<style>
+	/* Section Separators - Always load these styles */
+	.section-separator {
+		border: none;
+		height: 1px;
+		background: #e8eaed;
+		margin: 40px 0;
+		display: block;
+		visibility: visible;
+	}
+	
+	/* Dark mode separators */
+	body.tie-dark-mode .section-separator,
+	html.tie-dark-mode .section-separator,
+	.tie-dark-mode .section-separator,
+	body[data-theme="dark"] .section-separator,
+	html[data-theme="dark"] .section-separator,
+	[data-theme="dark"] .section-separator,
+	body.dark-mode .section-separator,
+	html.dark-mode .section-separator,
+	.dark-mode .section-separator,
+	body[class*="dark"] .section-separator,
+	html[class*="dark"] .section-separator {
+		background: rgba(255,255,255,0.15);
+	}
+	
+	/* Responsive separators */
+	@media (max-width: 768px) {
+		.section-separator {
+			margin: 30px 0;
+		}
+	}
+	
+	/* IMPROVED DOWNLOAD SECTION STYLES */
+	.game-download-section {
+		margin: 30px 0 !important;
+		text-align: center !important;
+	}
+	
+	.game-download-section .widget-title {
+		margin-bottom: 24px !important;
+	}
+	
+	.game-download-section .main-title {
+		font-size: 18px !important;
+		font-weight: 700 !important;
+		margin: 0 0 6px 0 !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		gap: 8px !important;
+		color: #2c3e50 !important;
+	}
+	
+	.game-download-section .the-subtitle {
+		color: #7f8c8d !important;
+		font-size: 14px !important;
+		margin: 0 !important;
+		font-weight: 400 !important;
+	}
+	
+	.download-buttons-list {
+		margin-bottom: 20px !important;
+		display: flex !important;
+		flex-direction: column !important;
+		align-items: center !important;
+		gap: 8px !important;
+	}
+	
+	.download-item {
+		width: 100% !important;
+		max-width: 260px !important;
+		margin: 0 !important;
+	}
+	
+	.download-link {
+		display: flex !important;
+		align-items: center !important;
+		padding: 10px 14px !important;
+		border: 1px solid var(--brand-color) !important;
+		border-radius: 6px !important;
+		background: linear-gradient(135deg, var(--brand-color) 0%, #0056d3 100%) !important;
+		color: white !important;
+		text-decoration: none !important;
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+		position: relative !important;
+		box-shadow: 0 6px 20px rgba(6, 105, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+		width: 100% !important;
+		min-height: 48px !important;
+		transform: translateY(-3px) !important;
+	}
+	
+	.download-link:hover {
+		background: rgba(255, 255, 255, 0.25) !important;
+		backdrop-filter: blur(10px) !important;
+		-webkit-backdrop-filter: blur(10px) !important;
+		border: 1px solid rgba(255, 255, 255, 0.3) !important;
+		color: white !important;
+		transform: translateY(-4px) scale(1.02) !important;
+		box-shadow: 0 8px 32px rgba(6, 105, 255, 0.4), 0 4px 16px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+	}
+	
+	.download-icon {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		width: 28px !important;
+		height: 28px !important;
+		margin-right: 12px !important;
+		background: rgba(255, 255, 255, 0.2) !important;
+		border-radius: 5px !important;
+		color: white !important;
+		flex-shrink: 0 !important;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+	}
+	
+	.download-link:hover .download-icon {
+		background: rgba(255, 255, 255, 0.3) !important;
+		color: white !important;
+		box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+	}
+	
+	.download-content {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-width: 0 !important;
+		justify-content: center !important;
+		gap: 1px !important;
+	}
+	
+	.download-title {
+		font-size: 14px !important;
+		font-weight: 600 !important;
+		margin: 0 !important;
+		line-height: 1.2 !important;
+		white-space: nowrap !important;
+		overflow: hidden !important;
+		text-overflow: ellipsis !important;
+	}
+	
+	.download-subtitle {
+		font-size: 11px !important;
+		color: rgba(255, 255, 255, 0.8) !important;
+		line-height: 1.1 !important;
+		margin: 0 !important;
+		white-space: nowrap !important;
+		overflow: hidden !important;
+		text-overflow: ellipsis !important;
+	}
+	
+	.download-link:hover .download-subtitle {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+	
+	.download-arrow {
+		color: rgba(255, 255, 255, 0.9) !important;
+		transition: all 0.25s ease !important;
+		margin-left: auto !important;
+		flex-shrink: 0 !important;
+		font-size: 11px !important;
+		align-self: center !important;
+	}
+	
+	.download-link:hover .download-arrow {
+		color: white !important;
+		transform: translateX(3px) !important;
+	}
+	
+	.download-footer-info {
+		border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+		padding-top: 16px !important;
+		margin-top: 20px !important;
+	}
+	
+	.download-meta {
+		display: flex !important;
+		justify-content: center !important;
+		gap: 20px !important;
+		flex-wrap: wrap !important;
+	}
+	
+	.download-meta span {
+		font-size: 11px !important;
+		color: #95a5a6 !important;
+		display: flex !important;
+		align-items: center !important;
+		gap: 5px !important;
+		font-weight: 500 !important;
+	}
+	
+	/* Dark theme support */
+	.dark-skin .game-download-section .main-title {
+		color: #ecf0f1 !important;
+	}
+	
+	.dark-skin .game-download-section .the-subtitle {
+		color: #bdc3c7 !important;
+	}
+	
+	.dark-skin .download-link {
+		background: linear-gradient(135deg, var(--brand-color) 0%, #0056d3 100%) !important;
+		border-color: var(--brand-color) !important;
+		color: white !important;
+		box-shadow: 0 6px 20px rgba(6, 105, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+		transform: translateY(-3px) !important;
+	}
+	
+	.dark-skin .download-link:hover {
+		background: rgba(255, 255, 255, 0.15) !important;
+		backdrop-filter: blur(15px) !important;
+		-webkit-backdrop-filter: blur(15px) !important;
+		border: 1px solid rgba(255, 255, 255, 0.25) !important;
+		color: white !important;
+		transform: translateY(-4px) scale(1.02) !important;
+		box-shadow: 0 8px 32px rgba(6, 105, 255, 0.5), 0 4px 16px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+	}
+	
+	.dark-skin .download-subtitle {
+		color: #aaa !important;
+	}
+	
+	.dark-skin .download-meta span {
+		color: #95a5a6 !important;
+	}
+	
+	.dark-skin .download-footer-info {
+		border-color: rgba(255, 255, 255, 0.08) !important;
+	}
+	
+	/* Responsive */
+	@media (max-width: 768px) {
+		.download-buttons-list {
+			gap: 6px !important;
+		}
+		
+		.download-item {
+			max-width: 100% !important;
+		}
+		
+		.download-link {
+			padding: 8px 12px !important;
+			min-height: 42px !important;
+		}
+		
+		.download-icon {
+			width: 24px !important;
+			height: 24px !important;
+			margin-right: 10px !important;
+		}
+		
+		.download-title {
+			font-size: 13px !important;
+		}
+		
+		.download-subtitle {
+			font-size: 10px !important;
+		}
+		
+		.download-arrow {
+			font-size: 10px !important;
+		}
+	}
+	</style>
+	
 	<?php
 	return ob_get_clean();
 }
@@ -1369,8 +1628,10 @@ function generate_dlc_accordion_html( $dlcs, $is_open = false ) {
 	.section-separator {
 		border: none;
 		height: 1px;
-		background: #e1e5e9;
+		background: #e8eaed;
 		margin: 40px 0;
+		display: block;
+		visibility: visible;
 	}
 	
 	/* Dark mode separators */
