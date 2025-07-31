@@ -9,7 +9,9 @@ function tie_theme_child_styles_scripts() {
 	}
 
 	/* THIS WILL ALLOW ADDING CUSTOM CSS TO THE style.css */
-	wp_enqueue_style( 'tie-theme-child-css', get_stylesheet_directory_uri().'/style.css', '', '1.0.1' );
+	// Use filemtime for better caching control - updates version when file changes
+	$version = filemtime( get_stylesheet_directory() . '/style.css' );
+	wp_enqueue_style( 'tie-theme-child-css', get_stylesheet_directory_uri().'/style.css', '', $version );
 
 }
 
@@ -17,6 +19,86 @@ function tie_theme_child_styles_scripts() {
 add_action( 'admin_enqueue_scripts', 'force_admin_refresh' );
 function force_admin_refresh() {
 	wp_enqueue_script( 'jquery' );
+}
+
+// Force clear any server-side caching for child theme assets
+add_filter( 'style_loader_src', 'add_cache_buster_to_child_theme_assets', 999, 2 );
+add_filter( 'script_loader_src', 'add_cache_buster_to_child_theme_assets', 999, 2 );
+function add_cache_buster_to_child_theme_assets( $src, $handle ) {
+	// Only add cache buster to child theme assets
+	if ( strpos( $src, 'jannah-child' ) !== false ) {
+		// Remove any existing query string
+		$src = remove_query_arg( 'ver', $src );
+		// Add timestamp-based version
+		$src = add_query_arg( 'ver', time(), $src );
+	}
+	return $src;
+}
+
+// Add critical inline CSS for non-logged-in users to bypass caching
+add_action( 'wp_head', 'add_critical_inline_styles', 99 );
+function add_critical_inline_styles() {
+	?>
+	<style id="jannah-child-critical-css">
+	/* Critical CSS for section separators - ensure visibility */
+	.section-separator,
+	.dlc-separator,
+	.requirements-separator {
+		border: none !important;
+		height: 1px !important;
+		background: #e8eaed !important;
+		margin: 40px 0 !important;
+		display: block !important;
+		visibility: visible !important;
+		opacity: 1 !important;
+		clear: both !important;
+	}
+	
+	/* Dark mode support */
+	.dark-skin .section-separator,
+	.dark-skin .dlc-separator,
+	.dark-skin .requirements-separator {
+		background: rgba(255,255,255,0.15) !important;
+	}
+	
+	/* Ensure download section styles load */
+	.game-download-section {
+		margin: 30px 0 !important;
+		text-align: center !important;
+	}
+	
+	.download-link {
+		display: flex !important;
+		align-items: center !important;
+		padding: 8px 16px !important;
+		border: 1px solid rgba(0, 0, 0, 0.08) !important;
+		border-radius: 8px !important;
+		background: #ffffff !important;
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	}
+	
+	.download-link:hover {
+		background: var(--brand-color, #0069ff) !important;
+		color: white !important;
+		transform: translateY(-2px) !important;
+		box-shadow: 0 4px 16px rgba(6, 105, 255, 0.25) !important;
+	}
+	
+	/* Ensure quick download button visibility */
+	.quick-download-btn {
+		display: inline-flex !important;
+		align-items: center !important;
+		gap: 8px !important;
+		padding: 10px 20px !important;
+		background: linear-gradient(135deg, var(--brand-color, #0069ff) 0%, #4facfe 100%) !important;
+		color: white !important;
+		text-decoration: none !important;
+		border-radius: 25px !important;
+		font-weight: 600 !important;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	}
+	</style>
+	<?php
 }
 
 // Add smooth scroll functionality for download button
