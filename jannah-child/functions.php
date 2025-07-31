@@ -1,6 +1,6 @@
 <?php
 
-add_action( 'wp_enqueue_scripts', 'tie_theme_child_styles_scripts', 80 );
+add_action( 'wp_enqueue_scripts', 'tie_theme_child_styles_scripts', 999 );
 function tie_theme_child_styles_scripts() {
 
 	/* Load the RTL.css file of the parent theme */
@@ -9,9 +9,70 @@ function tie_theme_child_styles_scripts() {
 	}
 
 	/* THIS WILL ALLOW ADDING CUSTOM CSS TO THE style.css */
-	// Use filemtime for better caching control - updates version when file changes
-	$version = filemtime( get_stylesheet_directory() . '/style.css' );
-	wp_enqueue_style( 'tie-theme-child-css', get_stylesheet_directory_uri().'/style.css', '', $version );
+	// Force load with timestamp to bypass all caching
+	wp_enqueue_style( 'tie-theme-child-css', get_stylesheet_directory_uri().'/style.css', array(), time(), 'all' );
+	
+	// Also add inline styles directly
+	$custom_css = "
+		/* Forced inline styles from child theme */
+		.section-separator,
+		.dlc-separator,
+		.requirements-separator {
+			border: none !important;
+			height: 1px !important;
+			background: #e8eaed !important;
+			margin: 40px 0 !important;
+			display: block !important;
+			visibility: visible !important;
+		}
+		
+		.game-download-section {
+			margin: 30px 0 !important;
+			text-align: center !important;
+		}
+		
+		.download-link {
+			display: flex !important;
+			align-items: center !important;
+			padding: 8px 16px !important;
+			border: 1px solid rgba(0, 0, 0, 0.08) !important;
+			border-radius: 8px !important;
+			background: #ffffff !important;
+			color: #333 !important;
+			text-decoration: none !important;
+			transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+		}
+		
+		.download-link:hover {
+			background: #0069ff !important;
+			color: white !important;
+			border-color: #0069ff !important;
+			transform: translateY(-2px) !important;
+			box-shadow: 0 4px 16px rgba(6, 105, 255, 0.25) !important;
+		}
+		
+		.quick-download-btn {
+			display: inline-flex !important;
+			align-items: center !important;
+			gap: 8px !important;
+			padding: 10px 20px !important;
+			background: linear-gradient(135deg, #0069ff 0%, #4facfe 100%) !important;
+			color: white !important;
+			text-decoration: none !important;
+			border-radius: 25px !important;
+			font-weight: 600 !important;
+			box-shadow: 0 4px 15px rgba(6, 105, 255, 0.3) !important;
+		}
+		
+		.quick-download-btn:hover {
+			background: linear-gradient(135deg, #0056cc 0%, #3d8bfe 100%) !important;
+			transform: translateY(-3px) scale(1.01) !important;
+			box-shadow: 0 6px 20px rgba(6, 105, 255, 0.4) !important;
+			color: white !important;
+		}
+	";
+	
+	wp_add_inline_style( 'tie-theme-child-css', $custom_css );
 
 }
 
@@ -35,10 +96,84 @@ function add_cache_buster_to_child_theme_assets( $src, $handle ) {
 	return $src;
 }
 
+// Add debug comment to verify child theme is loading
+add_action( 'wp_head', 'add_child_theme_debug', 1 );
+function add_child_theme_debug() {
+	echo '<!-- Jannah Child Theme Active - Version: ' . time() . ' -->' . PHP_EOL;
+	
+	// Force critical styles directly in head
+	if ( ! is_admin() ) {
+		?>
+		<style type="text/css" id="jannah-child-forced-styles">
+		/* FORCED CRITICAL STYLES - BYPASS ALL CACHING */
+		.section-separator,
+		.dlc-separator,
+		.requirements-separator {
+			border: none !important;
+			height: 1px !important;
+			background: #e8eaed !important;
+			margin: 40px 0 !important;
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+			clear: both !important;
+		}
+		
+		body.dark-skin .section-separator,
+		body.dark-skin .dlc-separator,
+		body.dark-skin .requirements-separator,
+		.dark-skin .section-separator,
+		.dark-skin .dlc-separator,
+		.dark-skin .requirements-separator {
+			background: rgba(255,255,255,0.15) !important;
+		}
+		
+		/* Force download section visibility */
+		.game-download-section {
+			margin: 30px 0 !important;
+			text-align: center !important;
+			display: block !important;
+		}
+		
+		.download-link {
+			display: flex !important;
+			align-items: center !important;
+			padding: 8px 16px !important;
+			border: 1px solid rgba(0, 0, 0, 0.08) !important;
+			border-radius: 8px !important;
+			background: #ffffff !important;
+			color: #333 !important;
+			text-decoration: none !important;
+		}
+		
+		.download-link:hover {
+			background: #0069ff !important;
+			color: white !important;
+			border-color: #0069ff !important;
+			transform: translateY(-2px) !important;
+		}
+		
+		.quick-download-btn {
+			display: inline-flex !important;
+			align-items: center !important;
+			gap: 8px !important;
+			padding: 10px 20px !important;
+			background: linear-gradient(135deg, #0069ff 0%, #4facfe 100%) !important;
+			color: white !important;
+			text-decoration: none !important;
+			border-radius: 25px !important;
+			font-weight: 600 !important;
+		}
+		</style>
+		<?php
+	}
+}
+
 // Add critical inline CSS for non-logged-in users to bypass caching
 add_action( 'wp_head', 'add_critical_inline_styles', 99 );
 function add_critical_inline_styles() {
 	?>
+	<!-- Jannah Child Critical CSS Start -->
 	<style id="jannah-child-critical-css">
 	/* Critical CSS for section separators - ensure visibility */
 	.section-separator,
@@ -98,7 +233,40 @@ function add_critical_inline_styles() {
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 	}
 	</style>
+	<!-- Jannah Child Critical CSS End -->
 	<?php
+}
+
+// Force styles into the_content for single posts
+add_filter( 'the_content', 'inject_inline_styles_to_content', 1 );
+function inject_inline_styles_to_content( $content ) {
+	if ( is_single() && ! is_admin() ) {
+		$inline_styles = '<style>
+		/* FORCE INLINE STYLES FOR VISIBILITY */
+		.section-separator,
+		.dlc-separator,
+		.requirements-separator {
+			border: none !important;
+			height: 1px !important;
+			background: #e8eaed !important;
+			margin: 40px 0 !important;
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+			clear: both !important;
+		}
+		
+		.dark-skin .section-separator,
+		.dark-skin .dlc-separator,
+		.dark-skin .requirements-separator {
+			background: rgba(255,255,255,0.15) !important;
+		}
+		</style>';
+		
+		// Add styles at the beginning of content
+		$content = $inline_styles . $content;
+	}
+	return $content;
 }
 
 // Add smooth scroll functionality for download button
@@ -153,6 +321,33 @@ function child_theme_debug_notice() {
 	if ( get_current_screen()->id === 'post' ) {
 		echo '<div class="notice notice-success"><p>Jannah Child Theme is Active - Game Details Meta Box Loaded</p></div>';
 	}
+}
+
+// Force use of child theme template for single posts
+add_filter( 'template_include', 'force_child_theme_template', 999 );
+function force_child_theme_template( $template ) {
+	if ( is_single() && ! is_admin() ) {
+		// Check if we're looking for featured.php
+		if ( strpos( $template, 'featured.php' ) !== false ) {
+			$child_template = get_stylesheet_directory() . '/templates/single-post/featured.php';
+			if ( file_exists( $child_template ) ) {
+				return $child_template;
+			}
+		}
+	}
+	return $template;
+}
+
+// Force child theme directory for template parts
+add_filter( 'theme_file_path', 'force_child_theme_path', 999, 2 );
+function force_child_theme_path( $path, $file = '' ) {
+	if ( ! is_admin() && strpos( $file, 'templates/single-post/featured.php' ) !== false ) {
+		$child_path = get_stylesheet_directory() . '/' . $file;
+		if ( file_exists( $child_path ) ) {
+			return $child_path;
+		}
+	}
+	return $path;
 }
 
 // =====================================================
