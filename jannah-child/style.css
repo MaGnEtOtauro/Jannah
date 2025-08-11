@@ -418,10 +418,24 @@
    GAME DETAILS FEATURED AREA - SINGLE POST LAYOUT
    ===================================================== */
 
+/* Global box-sizing for game details section */
+.game-details-featured *,
+.game-details-featured *::before,
+.game-details-featured *::after {
+    box-sizing: border-box;
+}
+
 .game-details-featured {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding: 0;
+    overflow: hidden;
+}
+
+.game-details-featured .featured-area-inner {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .game-details-wrapper {
@@ -431,11 +445,13 @@
     max-width: 1200px;
     margin: 0 auto;
     align-items: flex-start;
+    box-sizing: border-box;
 }
 
 .game-poster-column {
     flex: 0 0 320px;
     position: relative;
+    box-sizing: border-box;
 }
 
 .game-poster {
@@ -445,6 +461,7 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     transition: all 0.3s ease;
     background: #f8f9fa;
+    box-sizing: border-box;
 }
 
 .game-poster.portrait-poster {
@@ -473,6 +490,8 @@
 .game-info-column {
     flex: 1;
     padding: 0 0 0 10px;
+    box-sizing: border-box;
+    min-width: 0; /* Prevent flex item from overflowing */
 }
 
 .game-details-list {
@@ -658,20 +677,23 @@
     
     .game-poster.portrait-poster {
         width: 260px;
-        height: 330px; /* Scaled down proportionally */
+        height: 330px;
     }
     
     .game-poster.portrait-poster img {
-        width: 260px;
-        height: 330px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 }
 
+/* Tablet View */
 @media (max-width: 900px) {
     .game-details-wrapper {
         flex-direction: column;
-        gap: 20px;
-        padding: 20px 15px;
+        gap: 25px;
+        padding: 25px 15px;
+        align-items: center;
     }
     
     .game-poster-column {
@@ -679,75 +701,171 @@
         width: 100%;
         display: flex;
         justify-content: center;
+        margin-bottom: 10px;
     }
     
     .game-poster.portrait-poster {
-        width: 260px;
-        height: 330px;
+        width: 280px;
+        height: 355px;
+        margin: 0 auto;
     }
     
     .game-poster.portrait-poster img {
-        width: 260px;
-        height: 330px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
     
     .game-info-column {
         padding: 0;
+        width: 100%;
+        max-width: 600px;
     }
     
-    .detail-label {
-        min-width: 120px;
-        font-size: 13px;
-    }
-    
-    .detail-value {
-        font-size: 13px;
-    }
-    
-    .quick-download-btn {
-        padding: 8px 16px;
-        font-size: 13px;
-        gap: 6px;
-    }
-}
-
-@media (max-width: 480px) {
-    .game-details-wrapper {
-        padding: 15px 10px;
-    }
-    
-    .game-poster.portrait-poster {
-        width: 200px;
-        height: 254px; /* Scaled down proportionally */
-    }
-    
-    .game-poster.portrait-poster img {
-        width: 200px;
-        height: 254px;
+    .game-details-list {
+        background: rgba(255, 255, 255, 0.6);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
     
     .game-detail-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-        padding: 10px 0;
+        padding: 14px 10px;
+        margin-bottom: 10px;
     }
     
     .detail-label {
-        min-width: auto;
+        min-width: 130px;
+        font-size: 14px;
+    }
+    
+    .detail-value {
+        font-size: 14px;
+        padding: 6px 14px;
+    }
+    
+    .game-download-quick-action {
+        margin-top: 20px;
+    }
+    
+    .quick-download-btn {
+        padding: 12px 24px;
+        font-size: 14px;
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+}
+
+/* Mobile View */
+@media (max-width: 600px) {
+    .game-details-wrapper {
+        padding: 20px 15px;
+        gap: 20px;
+    }
+    
+    .game-poster.portrait-poster {
+        width: 220px;
+        height: 279px;
+    }
+    
+    .game-poster.portrait-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .game-details-list {
+        padding: 15px;
+    }
+    
+    .game-detail-item {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 8px;
+    }
+    
+    .detail-label {
+        min-width: 100%;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+    
+    .detail-value {
+        font-size: 13px;
+        width: 100%;
+        text-align: left;
+        padding: 8px 12px;
+    }
+}
+
+/* Small Mobile View */
+@media (max-width: 480px) {
+    .game-details-featured {
+        padding: 0;
+    }
+    
+    .game-details-wrapper {
+        padding: 15px 10px;
+        gap: 15px;
+    }
+    
+    .game-poster.portrait-poster {
+        width: 180px;
+        height: 228px;
+    }
+    
+    .game-poster.portrait-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .game-poster {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    }
+    
+    .game-details-list {
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    .game-detail-item {
+        padding: 10px 5px;
+        margin-bottom: 8px;
+    }
+    
+    .game-detail-item:hover {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    
+    .detail-label {
         font-size: 12px;
+        gap: 6px;
+    }
+    
+    .detail-label [class*="tie-icon"],
+    .detail-label .fa {
+        font-size: 14px;
     }
     
     .detail-value {
         font-size: 12px;
-        align-self: stretch;
-        text-align: center;
+        padding: 6px 10px;
+        border-radius: 16px;
+    }
+    
+    .game-download-quick-action {
+        margin-top: 15px;
     }
     
     .quick-download-btn {
-        padding: 8px 14px;
+        padding: 10px 20px;
         font-size: 12px;
-        gap: 6px;
+        width: 100%;
+        max-width: none;
+        border-radius: 20px;
     }
     
     .quick-download-btn .fa-download {
@@ -756,6 +874,13 @@
     
     .quick-download-btn .fa-angle-down {
         font-size: 10px;
+    }
+}
+
+/* Dark theme responsive adjustments */
+@media (max-width: 900px) {
+    .dark-skin .game-details-list {
+        background: rgba(0, 0, 0, 0.3);
     }
 }
 

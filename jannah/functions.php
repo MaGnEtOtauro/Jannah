@@ -165,3 +165,113 @@ function jannah_save_game_version_meta( $post_id ) {
 		update_post_meta( $post_id, '_game_version', sanitize_text_field( $_POST['game_version'] ) );
 	}
 }
+
+/**
+ * Check if current user is on Windows and not on mobile
+ * @return bool True if Windows desktop user, false otherwise
+ */
+function jannah_is_windows_desktop_user() {
+	// If server doesn't have user agent, return false
+	if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
+		return false;
+	}
+	
+	$user_agent = $_SERVER['HTTP_USER_AGENT'];
+	
+	// Check if user agent contains Windows
+	$is_windows = ( stripos( $user_agent, 'Windows' ) !== false );
+	
+	// Check if it's a mobile device
+	$is_mobile = wp_is_mobile();
+	
+	// Additional mobile detection for edge cases
+	$mobile_agents = array(
+		'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 'Windows Phone',
+		'BlackBerry', 'BB10', 'Symbian', 'webOS', 'IEMobile', 'Opera Mini'
+	);
+	
+	foreach ( $mobile_agents as $agent ) {
+		if ( stripos( $user_agent, $agent ) !== false ) {
+			$is_mobile = true;
+			break;
+		}
+	}
+	
+	// Return true only if Windows and not mobile
+	return ( $is_windows && ! $is_mobile );
+}
+
+/**
+ * Add CSS to hide sliders on mobile devices as additional fallback
+ */
+add_action( 'wp_head', 'jannah_mobile_slider_css' );
+function jannah_mobile_slider_css() {
+	?>
+	<style>
+		/* Hide all sliders on mobile devices */
+		@media only screen and (max-width: 768px) {
+			.main-slider,
+			.slider-area,
+			.slider-area-inner,
+			.tie-slick-slider,
+			[id*="tie-slider-"],
+			.tie-main-slider,
+			.boxed-slider,
+			.wide-slider,
+			.full-width-slider {
+				display: none !important;
+			}
+		}
+		
+		/* Additional mobile detection for various devices */
+		@media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 2) {
+			.main-slider,
+			.slider-area,
+			.slider-area-inner,
+			.tie-slick-slider,
+			[id*="tie-slider-"],
+			.tie-main-slider,
+			.boxed-slider,
+			.wide-slider,
+			.full-width-slider {
+				display: none !important;
+			}
+		}
+	</style>
+	
+	<script>
+		// JavaScript fallback for accurate device detection
+		document.addEventListener('DOMContentLoaded', function() {
+			// Check if user is on Windows and not mobile
+			var isWindows = /Windows/i.test(navigator.userAgent);
+			var isMobile = /Mobile|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|BB10|Symbian|webOS|IEMobile|Opera Mini/i.test(navigator.userAgent);
+			
+			// Additional mobile detection
+			var isSmallScreen = window.innerWidth <= 768;
+			var isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+			
+			// If not Windows desktop, hide all sliders
+			if (!isWindows || isMobile || isSmallScreen || isTouchDevice) {
+				var sliderSelectors = [
+					'.main-slider',
+					'.slider-area', 
+					'.slider-area-inner',
+					'.tie-slick-slider',
+					'[id*="tie-slider-"]',
+					'.tie-main-slider',
+					'.boxed-slider',
+					'.wide-slider',
+					'.full-width-slider'
+				];
+				
+				sliderSelectors.forEach(function(selector) {
+					var elements = document.querySelectorAll(selector);
+					elements.forEach(function(element) {
+						element.style.display = 'none';
+					});
+				});
+			}
+		});
+	</script>
+	<?php
+}

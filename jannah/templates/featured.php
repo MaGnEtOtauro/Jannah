@@ -13,6 +13,10 @@
 
 defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 
+// Check if user is on Windows desktop - if not, exit early to hide slider
+if ( ! jannah_is_windows_desktop_user() ) {
+	return;
+}
 
 $is_do_not_dublicate = false;
 
