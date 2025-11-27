@@ -2335,3 +2335,170 @@ function generate_dlc_accordion_html( $dlcs, $is_open = false ) {
 	return ob_get_clean();
 }
 
+
+/**
+ * Determine whether the current Page Builder block represents the Recently Added area.
+ *
+ * @param array $block Page Builder block config.
+ * @return bool
+ */
+function jannah_child_is_recently_added_block( $block ){
+
+	if( empty( $block ) || ! is_array( $block ) ){
+		return false;
+	}
+
+	$title = '';
+
+	if( ! empty( $block['title'] ) ){
+		$title = $block['title'];
+	}
+	elseif( ! empty( $block['section_title'] ) ){
+		$title = $block['section_title'];
+	}
+
+	if( empty( $title ) ){
+		return false;
+	}
+
+	$title = strtolower( trim( wp_strip_all_tags( html_entity_decode( $title ) ) ) );
+
+	/**
+	 * Allow overriding the phrases that should match the Recently Added block.
+	 *
+	 * @param array $targets
+	 */
+	$targets = apply_filters( 'jannah_child_recently_added_titles', array( 'recently added' ) );
+
+	foreach( (array) $targets as $target ){
+		if( $target && strpos( $title, strtolower( $target ) ) !== false ){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+/**
+ * Flag the Recently Added block so sticky posts can be injected.
+ */
+add_filter( 'TieLabs/Query/args', 'jannah_child_enable_sticky_recently_added', 10, 2 );
+function jannah_child_enable_sticky_recently_added( $args, $block ){
+
+	if( is_admin() && ! wp_doing_ajax() ){
+		return $args;
+	}
+
+	if( empty( $block ) || ! jannah_child_is_recently_added_block( $block ) ){
+		return $args;
+	}
+
+	if( empty( get_option( 'sticky_posts', array() ) ) ){
+		return $args;
+	}
+
+	$args['jannah_child_force_sticky_first'] = true;
+
+	return $args;
+}
+
+
+/**
+ * Fetch sticky posts that match the same constraints used by the original query.
+ *
+ * @param WP_Query $query
+ * @param array    $sticky_ids
+ * @return array
+ */
+function jannah_child_get_recently_added_stickies( $query, $sticky_ids ){
+
+	if( empty( $sticky_ids ) || ! $query instanceof WP_Query ){
+		return array();
+	}
+
+	$per_page = (int) $query->get( 'posts_per_page' );
+
+	if( $per_page < 1 ){
+		$per_page = (int) get_option( 'posts_per_page', 10 );
+	}
+
+	$sticky_args = $query->query_vars;
+	unset(
+		$sticky_args['paged'],
+		$sticky_args['offset'],
+		$sticky_args['post__not_in'],
+		$sticky_args['jannah_child_force_sticky_first']
+	);
+
+	$sticky_args['post__in']            = $sticky_ids;
+	$sticky_args['posts_per_page']      = min( count( $sticky_ids ), $per_page );
+	$sticky_args['ignore_sticky_posts'] = false;
+	$sticky_args['no_found_rows']       = true;
+	$sticky_args['orderby']             = 'date';
+	$sticky_args['order']               = 'DESC';
+
+	$sticky_query = new WP_Query( $sticky_args );
+
+	return $sticky_query->posts;
+}
+
+
+/**
+ * Make sure sticky posts show up first in the Recently Added block.
+ */
+add_filter( 'the_posts', 'jannah_child_prioritize_recently_added_sticky_posts', 10, 2 );
+function jannah_child_prioritize_recently_added_sticky_posts( $posts, $query ){
+	static $processing = false;
+
+	if( $processing ){
+		return $posts;
+	}
+
+	if( empty( $posts ) || ! $query instanceof WP_Query ){
+		return $posts;
+	}
+
+	if( ! $query->get( 'jannah_child_force_sticky_first' ) ){
+		return $posts;
+	}
+
+	if( ( is_admin() && ! wp_doing_ajax() ) || (int) $query->get( 'paged' ) > 1 ){
+		return $posts;
+	}
+
+	$sticky_ids = get_option( 'sticky_posts', array() );
+
+	if( empty( $sticky_ids ) ){
+		return $posts;
+	}
+
+	$processing    = true;
+	$sticky_posts  = jannah_child_get_recently_added_stickies( $query, $sticky_ids );
+	$processing    = false;
+
+	if( empty( $sticky_posts ) ){
+		return $posts;
+	}
+
+	// Remove sticky posts from the original set to avoid duplicates.
+	$sticky_lookup = wp_list_pluck( $sticky_posts, 'ID' );
+	$non_sticky    = array();
+
+	foreach( $posts as $post ){
+		if( in_array( $post->ID, $sticky_lookup, true ) ){
+			continue;
+		}
+
+		$non_sticky[] = $post;
+	}
+
+	$merged   = array_merge( $sticky_posts, $non_sticky );
+	$per_page = (int) $query->get( 'posts_per_page' );
+
+	if( $per_page > 0 && count( $merged ) > $per_page ){
+		$merged = array_slice( $merged, 0, $per_page );
+	}
+
+	return $merged;
+}
