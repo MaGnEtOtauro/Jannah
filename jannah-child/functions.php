@@ -2502,3 +2502,131 @@ function jannah_child_prioritize_recently_added_sticky_posts( $posts, $query ){
 
 	return $merged;
 }
+
+
+/**
+ * Track Recently Added block IDs so we can scope sticky styling.
+ */
+add_action( 'TieLabs/Builder/before_block', 'jannah_child_capture_recently_added_block_id', 5, 1 );
+function jannah_child_capture_recently_added_block_id( $block ){
+
+	if( is_admin() || empty( $block['boxid'] ) ){
+		return;
+	}
+
+	if( ! jannah_child_is_recently_added_block( $block ) ){
+		return;
+	}
+
+	if( empty( $GLOBALS['jannah_child_recently_added_blocks'] ) ){
+		$GLOBALS['jannah_child_recently_added_blocks'] = array();
+	}
+
+	$block_id = 'tie-'. sanitize_key( $block['boxid'] );
+	$GLOBALS['jannah_child_recently_added_blocks'][ $block_id ] = $block_id;
+}
+
+
+/**
+ * Always append the sticky class so CSS selectors work even on custom loops.
+ */
+add_filter( 'TieLabs/post_classes', 'jannah_child_force_sticky_class', 10, 4 );
+function jannah_child_force_sticky_class( $classes, $post_id, $standard = false, $main_post = false ){
+
+	if( is_sticky( $post_id ) && ! in_array( 'sticky', $classes, true ) ){
+		$classes[] = 'sticky';
+	}
+
+	return $classes;
+}
+
+
+/**
+ * Output contextual styles for sticky items in the Recently Added block(s).
+ */
+add_action( 'wp_footer', 'jannah_child_print_recently_added_sticky_styles', 8 );
+function jannah_child_print_recently_added_sticky_styles(){
+	if( empty( $GLOBALS['jannah_child_recently_added_blocks'] ) || ! is_array( $GLOBALS['jannah_child_recently_added_blocks'] ) ){
+		return;
+	}
+
+	$selectors = array();
+
+	foreach( $GLOBALS['jannah_child_recently_added_blocks'] as $block_id ){
+		$selectors[] = '#'. esc_attr( $block_id ) .' .sticky';
+	}
+
+	if( empty( $selectors ) ){
+		return;
+	}
+
+	$selector_list = implode( ',', $selectors );
+	?>
+	<style id="jannah-child-sticky-highlight">
+		<?php echo esc_html( $selector_list ); ?>{
+			position: relative;
+			z-index: 1;
+			border-left: 4px solid rgba(255, 193, 7, 0.85);
+			background: linear-gradient(90deg, rgba(255, 187, 0, 0.12), rgba(255, 187, 0, 0.03));
+			box-shadow: 0 12px 25px rgba(0, 0, 0, 0.07);
+			border-radius: 12px;
+			padding-left: 18px;
+		}
+
+		<?php echo esc_html( $selector_list ); ?>:before{
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			border-radius: inherit;
+			background: linear-gradient(120deg, rgba(255, 193, 7, 0.18), rgba(255, 193, 7, 0) 55%);
+			opacity: 0.6;
+		}
+
+		<?php echo esc_html( $selector_list ); ?> .post-thumb{
+			position: relative;
+			display: block;
+			overflow: hidden;
+			border-radius: 12px;
+		}
+
+		<?php echo esc_html( $selector_list ); ?> .post-thumb:after{
+			content: "\f521";
+			font-family: "Font Awesome 5 Free";
+			font-weight: 900;
+			font-size: 14px;
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			color: #fff;
+			background: linear-gradient(135deg, #ffcf4d, #ff9c00);
+			padding: 6px 7px;
+			border-radius: 999px;
+			box-shadow: 0 4px 12px rgba(255, 161, 0, 0.4);
+			text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+			z-index: 3;
+		}
+
+		body.tie-dark-mode <?php echo esc_html( $selector_list ); ?>:before,
+		body.dark-mode <?php echo esc_html( $selector_list ); ?>:before{
+			background: linear-gradient(120deg, rgba(255, 213, 98, 0.25), rgba(255, 213, 98, 0) 55%);
+		}
+
+		body.tie-dark-mode <?php echo esc_html( $selector_list ); ?>,
+		body.dark-mode <?php echo esc_html( $selector_list ); ?>{
+			border-left-color: rgba(255, 222, 147, 0.95);
+			background: linear-gradient(90deg, rgba(255, 194, 61, 0.16), rgba(255, 194, 61, 0.03));
+			box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+		}
+
+		body.tie-dark-mode <?php echo esc_html( $selector_list ); ?> .post-thumb:after,
+		body.dark-mode <?php echo esc_html( $selector_list ); ?> .post-thumb:after{
+			background: linear-gradient(135deg, #ffd25f, #ff9900);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+		}
+	</style>
+	<?php
+}
