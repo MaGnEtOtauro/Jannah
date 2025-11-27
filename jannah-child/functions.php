@@ -947,13 +947,11 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	}
 	
 	.download-link:hover {
-		background: rgba(255, 255, 255, 0.25) !important;
-		backdrop-filter: blur(10px) !important;
-		-webkit-backdrop-filter: blur(10px) !important;
-		border: 1px solid rgba(255, 255, 255, 0.3) !important;
-		color: white !important;
+		background: linear-gradient(135deg, rgba(0, 136, 255, 1) 0%, rgba(0, 102, 204, 1) 100%) !important;
+		color: #ffffff !important;
 		transform: translateY(-4px) scale(1.02) !important;
-		box-shadow: 0 8px 32px rgba(6, 105, 255, 0.4), 0 4px 16px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+		border-color: rgba(0, 102, 204, 0.65) !important;
+		box-shadow: 0 10px 28px rgba(0, 109, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
 	}
 	
 	.download-icon {
@@ -1047,10 +1045,10 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 
 	.game-important-note {
 		margin: 20px 0 30px 0 !important;
-		background: #fffbea !important;
-		border: 1px solid rgba(255, 193, 7, 0.3) !important;
+		background: rgba(255, 200, 0, 0.12) !important;
+		border: 1px solid rgba(255, 200, 0, 0.35) !important;
 		border-radius: 12px !important;
-		box-shadow: 0 8px 25px rgba(255, 193, 7, 0.12) !important;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
 		overflow: hidden !important;
 	}
 
@@ -1140,13 +1138,13 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		width: 36px !important;
 		height: 36px !important;
 		border-radius: 50% !important;
-		background: linear-gradient(135deg, #ffe28a, #ffb347) !important;
+		background: linear-gradient(135deg, #ffc55c, #ff8f00) !important;
 		display: flex !important;
 		align-items: center !important;
 		justify-content: center !important;
-		color: #8a5b00 !important;
+		color: #1c0d00 !important;
 		font-size: 0 !important;
-		box-shadow: 0 6px 14px rgba(255, 179, 0, 0.35) !important;
+		box-shadow: 0 8px 20px rgba(0,0,0,0.55) !important;
 		flex-shrink: 0 !important;
 		position: relative !important;
 		overflow: hidden !important;
@@ -1173,7 +1171,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		width: 20px !important;
 		height: 24px !important;
 		border-radius: 3px !important;
-		background: linear-gradient(180deg, #fff6d9 0%, #ffe39f 100%) !important;
+		background: linear-gradient(180deg, rgba(255, 239, 196, 0.92) 0%, rgba(255, 209, 120, 0.8) 100%) !important;
 		box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2) !important;
 	}
 
@@ -1188,7 +1186,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		height: 8px !important;
 		right: -2px !important;
 		top: -2px !important;
-		background: #ffe9b9 !important;
+		background: rgba(255, 227, 165, 0.9) !important;
 		transform: rotate(45deg) !important;
 		box-shadow: inset -2px 2px 0 rgba(0,0,0,0.08) !important;
 	}
@@ -1207,7 +1205,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		left: 5px !important;
 		right: 5px !important;
 		height: 2px !important;
-		background: rgba(106,63,0,0.35) !important;
+		background: rgba(28,13,0,0.4) !important;
 	}
 
 	.game-important-note .note-icon .note-icon-symbol .note-line-1{
@@ -1220,21 +1218,9 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 
 	.game-important-note .note-text {
 		font-size: 14px !important;
-		color: #6d4c00 !important;
+		color: #4a2b00 !important;
 		line-height: 1.6 !important;
 		padding: 0 20px 18px 20px !important;
-	}
-
-	.game-important-note .note-text p {
-		margin: 0 0 8px 0 !important;
-	}
-
-	.dark-skin .game-important-note,
-	body.tie-dark-mode .game-important-note {
-		background: rgba(255, 200, 0, 0.12) !important;
-		border-color: rgba(255, 200, 0, 0.35) !important;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
-		padding: 0 !important;
 	}
 
 	.dark-skin .game-important-note .note-label,
@@ -1244,25 +1230,8 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		color: #ffdf9a !important;
 	}
 
-	.dark-skin .game-important-note .note-icon,
-	body.tie-dark-mode .game-important-note .note-icon {
-		background: linear-gradient(135deg, #ffc55c, #ff8f00) !important;
-		box-shadow: 0 8px 20px rgba(0,0,0,0.55) !important;
-	}
-
-	.dark-skin .game-important-note .note-icon .note-icon-symbol,
-	body.tie-dark-mode .game-important-note .note-icon .note-icon-symbol {
-		background: linear-gradient(180deg, rgba(255, 239, 196, 0.92) 0%, rgba(255, 209, 120, 0.8) 100%) !important;
-	}
-
-	.dark-skin .game-important-note .note-icon .note-icon-symbol:before,
-	body.tie-dark-mode .game-important-note .note-icon .note-icon-symbol:before {
-		background: rgba(255, 227, 165, 0.9) !important;
-	}
-
-	.dark-skin .game-important-note .note-icon .note-lines,
-	body.tie-dark-mode .game-important-note .note-icon .note-lines {
-		background: rgba(28,13,0,0.4) !important;
+	.game-important-note .note-text p {
+		margin: 0 0 8px 0 !important;
 	}
 
 	.game-important-note .note-content{
@@ -1276,6 +1245,19 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 
 	.game-important-note.is-expanded .note-toggle{
 		padding-bottom: 12px !important;
+	}
+
+	.game-important-note.is-collapsed{
+		padding: 0 !important;
+	}
+
+	.game-important-note.is-collapsed .note-toggle{
+		padding: 12px 16px !important;
+		gap: 10px !important;
+	}
+
+	.game-important-note.is-collapsed .note-icon{
+		display: none !important;
 	}
 	
 	/* Dark theme support */
