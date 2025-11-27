@@ -705,6 +705,7 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	// Get requirements data
 	$minimum_requirements = $post_id ? get_post_meta( $post_id, '_game_minimum_requirements', true ) : '';
 	$recommended_requirements = $post_id ? get_post_meta( $post_id, '_game_recommended_requirements', true ) : '';
+	$important_note = $post_id ? get_post_meta( $post_id, '_game_important_note', true ) : '';
 	
 	// Get DLC data
 	$dlc_list = $post_id ? get_post_meta( $post_id, '_game_dlc_list', true ) : '';
@@ -784,6 +785,23 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 				</div>
 			</div>
 			<?php endif; ?>
+		</div>
+	</div>
+	<?php endif; ?>
+	
+	<?php if ( $important_note ) : ?>
+	<div class="container-wrapper game-important-note">
+		<div class="note-icon" aria-hidden="true">
+			<span class="note-icon-symbol">
+				<span class="note-lines note-line-1"></span>
+				<span class="note-lines note-line-2"></span>
+			</span>
+		</div>
+		<div class="note-content">
+			<h4 class="note-title">Important Note</h4>
+			<div class="note-text">
+				<?php echo wp_kses_post( wpautop( $important_note ) ); ?>
+			</div>
 		</div>
 	</div>
 	<?php endif; ?>
@@ -1019,6 +1037,152 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		align-items: center !important;
 		gap: 5px !important;
 		font-weight: 500 !important;
+	}
+
+	.game-important-note {
+		margin: 20px 0 30px 0 !important;
+		display: flex !important;
+		gap: 15px !important;
+		align-items: flex-start !important;
+		background: #fffbea !important;
+		border: 1px solid rgba(255, 193, 7, 0.3) !important;
+		border-radius: 12px !important;
+		padding: 18px 20px !important;
+		box-shadow: 0 8px 25px rgba(255, 193, 7, 0.12) !important;
+	}
+
+	.game-important-note .note-icon {
+		width: 36px !important;
+		height: 36px !important;
+		border-radius: 50% !important;
+		background: linear-gradient(135deg, #ffe28a, #ffb347) !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		color: #8a5b00 !important;
+		font-size: 0 !important;
+		box-shadow: 0 6px 14px rgba(255, 179, 0, 0.35) !important;
+		flex-shrink: 0 !important;
+		position: relative !important;
+		overflow: hidden !important;
+	}
+
+	.game-important-note .note-icon:after{
+		content: '';
+		position: absolute !important;
+		width: 80% !important;
+		height: 80% !important;
+		border-radius: 50% !important;
+		background: rgba(255,255,255,0.35) !important;
+		top: 4px !important;
+		left: 50% !important;
+		transform: translateX(-50%) !important;
+		filter: blur(8px) !important;
+		opacity: .6 !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol{
+		position: relative !important;
+		z-index: 2 !important;
+		display: block !important;
+		width: 20px !important;
+		height: 24px !important;
+		border-radius: 3px !important;
+		background: linear-gradient(180deg, #fff6d9 0%, #ffe39f 100%) !important;
+		box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2) !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol:before,
+	.game-important-note .note-icon .note-icon-symbol:after{
+		content: '';
+		position: absolute !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol:before{
+		width: 8px !important;
+		height: 8px !important;
+		right: -2px !important;
+		top: -2px !important;
+		background: #ffe9b9 !important;
+		transform: rotate(45deg) !important;
+		box-shadow: inset -2px 2px 0 rgba(0,0,0,0.08) !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol:after{
+		left: 4px !important;
+		right: 4px !important;
+		top: 6px !important;
+		bottom: 6px !important;
+		border-top: 2px solid rgba(106, 63, 0, 0.35) !important;
+		border-bottom: 2px solid rgba(106, 63, 0, 0.25) !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol .note-lines{
+		position: absolute !important;
+		left: 5px !important;
+		right: 5px !important;
+		height: 2px !important;
+		background: rgba(106,63,0,0.35) !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol .note-line-1{
+		top: 10px !important;
+	}
+
+	.game-important-note .note-icon .note-icon-symbol .note-line-2{
+		top: 14px !important;
+	}
+
+	.game-important-note .note-title {
+		margin: 0 0 6px 0 !important;
+		font-size: 15px !important;
+		font-weight: 700 !important;
+		color: #8a5b00 !important;
+	}
+
+	.game-important-note .note-text {
+		font-size: 14px !important;
+		color: #6d4c00 !important;
+		line-height: 1.6 !important;
+	}
+
+	.game-important-note .note-text p {
+		margin: 0 0 8px 0 !important;
+	}
+
+	.dark-skin .game-important-note,
+	body.tie-dark-mode .game-important-note {
+		background: rgba(255, 200, 0, 0.12) !important;
+		border-color: rgba(255, 200, 0, 0.35) !important;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+	}
+
+	.dark-skin .game-important-note .note-title,
+	body.tie-dark-mode .game-important-note .note-title,
+	.dark-skin .game-important-note .note-text,
+	body.tie-dark-mode .game-important-note .note-text {
+		color: #ffdf9a !important;
+	}
+
+	.dark-skin .game-important-note .note-icon,
+	body.tie-dark-mode .game-important-note .note-icon {
+		background: linear-gradient(135deg, #ffc55c, #ff8f00) !important;
+		box-shadow: 0 8px 20px rgba(0,0,0,0.55) !important;
+	}
+
+	.dark-skin .game-important-note .note-icon .note-icon-symbol,
+	body.tie-dark-mode .game-important-note .note-icon .note-icon-symbol {
+		background: linear-gradient(180deg, rgba(255, 239, 196, 0.92) 0%, rgba(255, 209, 120, 0.8) 100%) !important;
+	}
+
+	.dark-skin .game-important-note .note-icon .note-icon-symbol:before,
+	body.tie-dark-mode .game-important-note .note-icon .note-icon-symbol:before {
+		background: rgba(255, 227, 165, 0.9) !important;
+	}
+
+	.dark-skin .game-important-note .note-icon .note-lines,
+	body.tie-dark-mode .game-important-note .note-icon .note-lines {
+		background: rgba(28,13,0,0.4) !important;
 	}
 	
 	/* Dark theme support */
@@ -1414,6 +1578,13 @@ function game_requirements_meta_box_callback( $post ) {
 			gap: 20px;
 			margin-top: 15px;
 		}
+		.requirements-note {
+			margin-top: 20px;
+			background: white;
+			border: 1px solid #ddd;
+			border-radius: 6px;
+			padding: 20px;
+		}
 		.requirements-column {
 			flex: 1;
 			background: white;
@@ -1474,6 +1645,24 @@ function game_requirements_meta_box_callback( $post ) {
 					placeholder="OS: Windows 11&#10;Processor: Intel Core i7&#10;Memory: 16 GB RAM&#10;Graphics: NVIDIA RTX 2070&#10;Storage: 50 GB available space"><?php echo esc_textarea( $recommended_requirements ); ?></textarea>
 				<p class="field-description">Enter the recommended system requirements</p>
 			</div>
+		</div>
+
+		<div class="requirements-note">
+			<h4>⚠️ Important Note (Optional)</h4>
+			<?php
+				wp_editor(
+					get_post_meta( $post->ID, '_game_important_note', true ),
+					'game_important_note',
+					array(
+						'textarea_name' => 'game_important_note',
+						'media_buttons' => false,
+						'teeny'         => true,
+						'textarea_rows' => 6,
+						'quicktags'     => true,
+					)
+				);
+			?>
+			<p class="field-description">This note will appear directly under the System Requirements section on the single post.</p>
 		</div>
 	</div>
 	<?php
@@ -1560,6 +1749,11 @@ function save_game_requirements_meta_box_data( $post_id ) {
 	// Save recommended requirements
 	if ( isset( $_POST['game_recommended_requirements'] ) ) {
 		update_post_meta( $post_id, '_game_recommended_requirements', wp_kses_post( $_POST['game_recommended_requirements'] ) );
+	}
+
+	// Save important note
+	if ( isset( $_POST['game_important_note'] ) ) {
+		update_post_meta( $post_id, '_game_important_note', wp_kses_post( $_POST['game_important_note'] ) );
 	}
 }
 
