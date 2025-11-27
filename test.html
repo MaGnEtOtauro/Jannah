@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.note-arrow {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255,255,255,0.5);
+  position: relative;
+  box-shadow: 0 4px 10px rgba(12, 94, 214, 0.2);
+  overflow: visible;
+}
+.note-arrow:before {
+  content: '';
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 4px;
+  transform: rotate(45deg);
+  position: relative;
+  z-index: 2;
+}
+.note-arrow:after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  background: rgba(12, 94, 214, 0.35);
+  opacity: .5;
+  transform-origin: center;
+  animation: sonar 2.2s ease-in-out infinite;
+}
+@keyframes sonar {
+  0% { transform: scale(1); opacity: .45; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+</style>
+</head>
+<body>
+<div class="note-arrow"></div>
+</body>
+</html>

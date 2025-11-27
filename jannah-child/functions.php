@@ -790,15 +790,21 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	<?php endif; ?>
 	
 	<?php if ( $important_note ) : ?>
-	<div class="container-wrapper game-important-note">
-		<div class="note-icon" aria-hidden="true">
-			<span class="note-icon-symbol">
-				<span class="note-lines note-line-1"></span>
-				<span class="note-lines note-line-2"></span>
-			</span>
-		</div>
-		<div class="note-content">
-			<h4 class="note-title">Important Note</h4>
+	<?php $GLOBALS['jannah_child_has_note_toggle'] = true; ?>
+	<div class="container-wrapper game-important-note is-collapsed" data-note-toggle>
+		<button class="note-toggle" type="button" aria-expanded="false">
+			<div class="note-icon" aria-hidden="true">
+				<span class="note-icon-symbol">
+					<span class="note-lines note-line-1"></span>
+					<span class="note-lines note-line-2"></span>
+				</span>
+			</div>
+			<div class="note-toggle-text">
+				<span class="note-label">Important Note</span>
+				<span class="note-arrow" aria-hidden="true"></span>
+			</div>
+		</button>
+		<div class="note-content" hidden>
 			<div class="note-text">
 				<?php echo wp_kses_post( wpautop( $important_note ) ); ?>
 			</div>
@@ -1041,14 +1047,93 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 
 	.game-important-note {
 		margin: 20px 0 30px 0 !important;
-		display: flex !important;
-		gap: 15px !important;
-		align-items: flex-start !important;
 		background: #fffbea !important;
 		border: 1px solid rgba(255, 193, 7, 0.3) !important;
 		border-radius: 12px !important;
-		padding: 18px 20px !important;
 		box-shadow: 0 8px 25px rgba(255, 193, 7, 0.12) !important;
+		overflow: hidden !important;
+	}
+
+	.game-important-note .note-toggle{
+		display: flex !important;
+		align-items: center !important;
+		gap: 15px !important;
+		width: 100% !important;
+		padding: 18px 20px !important;
+		background: none !important;
+		border: none !important;
+		text-align: left !important;
+		cursor: pointer !important;
+	}
+
+	.game-important-note .note-toggle-text{
+		display: flex !important;
+		align-items: center !important;
+		justify-content: space-between !important;
+		width: 100% !important;
+	}
+
+	.game-important-note .note-label{
+		font-size: 15px !important;
+		font-weight: 700 !important;
+		color: #8a5b00 !important;
+	}
+
+	.game-important-note .note-arrow{
+		width: 22px !important;
+		height: 22px !important;
+		border-radius: 50% !important;
+		background: rgba(255, 255, 255, 0.25) !important;
+		border: 1px solid rgba(255,255,255,0.5) !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		position: relative !important;
+		box-shadow: 0 4px 10px rgba(12, 94, 214, 0.2) !important;
+		overflow: visible !important;
+	}
+
+	.game-important-note .note-arrow:before{
+		content: '';
+		border: solid #ffffff;
+		border-width: 0 2px 2px 0;
+		display: inline-block;
+		padding: 4px;
+		transform: rotate(45deg);
+		transition: transform .25s ease;
+		position: relative !important;
+		z-index: 2 !important;
+	}
+
+	.game-important-note.is-expanded .note-arrow:before{
+		transform: rotate(-135deg);
+	}
+
+	.game-important-note .note-arrow::after{
+		content: '';
+		position: absolute;
+		z-index: 1;
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		top: 0;
+		left: 0;
+		background: rgba(255, 255, 255, 0.8);
+		box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+		opacity: .7;
+		transform-origin: center;
+		animation: jannah-note-arrow-sonar 1.8s ease-out infinite;
+	}
+
+	@keyframes jannah-note-arrow-sonar{
+		0%{
+			transform: scale(1);
+			opacity: 0.7;
+		}
+		100%{
+			transform: scale(2.8);
+			opacity: 0;
+		}
 	}
 
 	.game-important-note .note-icon {
@@ -1133,17 +1218,11 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		top: 14px !important;
 	}
 
-	.game-important-note .note-title {
-		margin: 0 0 6px 0 !important;
-		font-size: 15px !important;
-		font-weight: 700 !important;
-		color: #8a5b00 !important;
-	}
-
 	.game-important-note .note-text {
 		font-size: 14px !important;
 		color: #6d4c00 !important;
 		line-height: 1.6 !important;
+		padding: 0 20px 18px 20px !important;
 	}
 
 	.game-important-note .note-text p {
@@ -1155,10 +1234,11 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		background: rgba(255, 200, 0, 0.12) !important;
 		border-color: rgba(255, 200, 0, 0.35) !important;
 		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+		padding: 0 !important;
 	}
 
-	.dark-skin .game-important-note .note-title,
-	body.tie-dark-mode .game-important-note .note-title,
+	.dark-skin .game-important-note .note-label,
+	body.tie-dark-mode .game-important-note .note-label,
 	.dark-skin .game-important-note .note-text,
 	body.tie-dark-mode .game-important-note .note-text {
 		color: #ffdf9a !important;
@@ -1183,6 +1263,19 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	.dark-skin .game-important-note .note-icon .note-lines,
 	body.tie-dark-mode .game-important-note .note-icon .note-lines {
 		background: rgba(28,13,0,0.4) !important;
+	}
+
+	.game-important-note .note-content{
+		display: none;
+		border-top: 1px solid rgba(255, 193, 7, 0.25) !important;
+	}
+
+	.game-important-note.is-expanded .note-content{
+		display: block;
+	}
+
+	.game-important-note.is-expanded .note-toggle{
+		padding-bottom: 12px !important;
 	}
 	
 	/* Dark theme support */
@@ -2740,23 +2833,26 @@ function jannah_child_force_sticky_class( $classes, $post_id, $standard = false,
  */
 add_action( 'wp_footer', 'jannah_child_print_recently_added_sticky_styles', 8 );
 function jannah_child_print_recently_added_sticky_styles(){
-	if( empty( $GLOBALS['jannah_child_recently_added_blocks'] ) || ! is_array( $GLOBALS['jannah_child_recently_added_blocks'] ) ){
+
+	$has_note_toggle = ! empty( $GLOBALS['jannah_child_has_note_toggle'] );
+	$selectors       = array();
+
+	if( ! empty( $GLOBALS['jannah_child_recently_added_blocks'] ) && is_array( $GLOBALS['jannah_child_recently_added_blocks'] ) ){
+		foreach( $GLOBALS['jannah_child_recently_added_blocks'] as $block_id ){
+			$selectors[] = '#'. esc_attr( $block_id ) .' .sticky';
+		}
+	}
+
+	$has_sticky_styles = ! empty( $selectors );
+
+	if( ! $has_sticky_styles && ! $has_note_toggle ){
 		return;
 	}
 
-	$selectors = array();
-
-	foreach( $GLOBALS['jannah_child_recently_added_blocks'] as $block_id ){
-		$selectors[] = '#'. esc_attr( $block_id ) .' .sticky';
-	}
-
-	if( empty( $selectors ) ){
-		return;
-	}
-
-	$selector_list = implode( ',', $selectors );
-	?>
-	<style id="jannah-child-sticky-highlight">
+	if( $has_sticky_styles ){
+		$selector_list = implode( ',', $selectors );
+		?>
+		<style id="jannah-child-sticky-highlight">
 		<?php echo esc_html( $selector_list ); ?>{
 			position: relative;
 			z-index: 1;
@@ -2821,6 +2917,38 @@ function jannah_child_print_recently_added_sticky_styles(){
 			background: linear-gradient(135deg, #ffd25f, #ff9900);
 			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 		}
-	</style>
-	<?php
+		</style>
+		<?php
+	}
+
+	if( $has_note_toggle ){
+		?>
+		<script id="jannah-child-note-toggle">
+			document.addEventListener('DOMContentLoaded', function(){
+				var notes = document.querySelectorAll('[data-note-toggle]');
+
+				notes.forEach(function(note){
+					var button  = note.querySelector('.note-toggle');
+					var content = note.querySelector('.note-content');
+
+					if(!button || !content){
+						return;
+					}
+
+					button.addEventListener('click', function(){
+						var isExpanded = note.classList.toggle('is-expanded');
+						button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+
+						if( isExpanded ){
+							content.removeAttribute( 'hidden' );
+						}
+						else{
+							content.setAttribute( 'hidden', 'hidden' );
+						}
+					});
+				});
+			});
+		</script>
+		<?php
+	}
 }
