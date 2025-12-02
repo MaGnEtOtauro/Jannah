@@ -706,6 +706,8 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	$minimum_requirements = $post_id ? get_post_meta( $post_id, '_game_minimum_requirements', true ) : '';
 	$recommended_requirements = $post_id ? get_post_meta( $post_id, '_game_recommended_requirements', true ) : '';
 	$important_note = $post_id ? get_post_meta( $post_id, '_game_important_note', true ) : '';
+	$video_embed = $post_id ? get_post_meta( $post_id, '_game_video_embed', true ) : '';
+	$video_title = $post_id ? jannah_child_get_gameplay_title( $post_id ) : '';
 	
 	// Get DLC data
 	$dlc_list = $post_id ? get_post_meta( $post_id, '_game_dlc_list', true ) : '';
@@ -814,6 +816,20 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 	<!-- REQUIREMENTS SEPARATOR START -->
 	<hr class="section-separator requirements-separator">
 	<!-- REQUIREMENTS SEPARATOR END -->
+
+	<?php if ( $video_embed ) : ?>
+	<div class="container-wrapper game-video-embed">
+		<div class="widget-title">
+			<h4 class="main-title">
+				<span class="tie-icon-youtube-play" aria-hidden="true"></span>
+				<?php echo esc_html( $video_title ); ?> Gameplay
+			</h4>
+		</div>
+		<div class="video-embed-frame">
+			<?php echo $video_embed; ?>
+		</div>
+	</div>
+	<?php endif; ?>
 	
 	<?php if ( ! empty( $download_buttons ) && is_array( $download_buttons ) ) : ?>
 	<div class="container-wrapper game-download-section" id="game-download-section">
@@ -1041,6 +1057,44 @@ function generate_download_section_html( $download_buttons, $post_id = null ) {
 		align-items: center !important;
 		gap: 5px !important;
 		font-weight: 500 !important;
+	}
+
+	.game-video-embed {
+		margin: 20px 0 !important;
+	}
+
+	.game-video-embed .video-embed-frame{
+		position: relative !important;
+		overflow: hidden !important;
+		border-radius: 12px !important;
+		box-shadow: 0 10px 35px rgba(0,0,0,0.12) !important;
+		background: #000 !important;
+	}
+
+	.game-video-embed .video-embed-frame iframe,
+	.game-video-embed .video-embed-frame video{
+		width: 100% !important;
+		height: auto !important;
+		aspect-ratio: 16 / 9;
+		display: block !important;
+		border: 0 !important;
+	}
+
+	@supports not (aspect-ratio: 16 / 9){
+		.game-video-embed .video-embed-frame iframe,
+		.game-video-embed .video-embed-frame video{
+			height: 315px !important;
+		}
+	}
+
+	.game-video-embed .video-embed-frame iframe,
+	.game-video-embed .video-embed-frame video{
+		position: absolute !important;
+		top: 0 !important;
+		left: 0 !important;
+		width: 100% !important;
+		height: 100% !important;
+		border: 0 !important;
 	}
 
 	.game-important-note {
@@ -1404,6 +1458,19 @@ function add_game_requirements_meta_box() {
 	);
 }
 
+// Add Gameplay Video Meta Box
+add_action( 'add_meta_boxes', 'add_game_video_meta_box' );
+function add_game_video_meta_box() {
+	add_meta_box(
+		'game_video_meta_box',
+		'🎬 Gameplay Video Embed',
+		'game_video_meta_box_callback',
+		'post',
+		'normal',
+		'low'
+	);
+}
+
 // Game Details Meta Box Callback
 function game_details_meta_box_callback( $post ) {
 	// Add nonce for security
@@ -1743,6 +1810,44 @@ function game_requirements_meta_box_callback( $post ) {
 	<?php
 }
 
+// Gameplay Video Meta Box Callback
+function game_video_meta_box_callback( $post ) {
+	wp_nonce_field( 'game_video_meta_box', 'game_video_meta_box_nonce' );
+	$video_embed = get_post_meta( $post->ID, '_game_video_embed', true );
+	$video_title = get_post_meta( $post->ID, '_game_video_title', true );
+	?>
+	<div id="game-video-container">
+		<style>
+		#game-video-container {
+			padding: 20px;
+			background: #f9f9f9;
+			border-radius: 8px;
+			margin: 10px 0;
+		}
+		#game_video_embed {
+			width: 100%;
+			min-height: 120px;
+			padding: 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-family: Consolas, Monaco, monospace;
+			font-size: 13px;
+			resize: vertical;
+		}
+		#game_video_embed:focus {
+			border-color: #0073aa;
+			outline: none;
+			box-shadow: 0 0 3px rgba(0,115,170,0.3);
+		}
+		</style>
+		<p>Paste a YouTube embed code (iframe) or any trusted video embed HTML. It will appear above the Download Links block on the frontend.</p>
+		<textarea name="game_video_embed" id="game_video_embed" placeholder="&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/XXXX&quot; ...&gt;&lt;/iframe&gt;"><?php echo esc_textarea( $video_embed ); ?></textarea>
+		<p style="margin-top:15px;font-weight:600;">Custom Gameplay Title (optional)</p>
+		<input type="text" name="game_video_title" id="game_video_title" value="<?php echo esc_attr( $video_title ); ?>" placeholder="e.g., Call of Duty Gameplay" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+	</div>
+	<?php
+}
+
 // Save Game Details Meta Box Data
 add_action( 'save_post', 'save_game_details_meta_box_data' );
 function save_game_details_meta_box_data( $post_id ) {
@@ -1829,6 +1934,62 @@ function save_game_requirements_meta_box_data( $post_id ) {
 	// Save important note
 	if ( isset( $_POST['game_important_note'] ) ) {
 		update_post_meta( $post_id, '_game_important_note', wp_kses_post( $_POST['game_important_note'] ) );
+	}
+}
+
+// Save Gameplay Video Meta Box Data
+add_action( 'save_post', 'save_game_video_meta_box_data' );
+function save_game_video_meta_box_data( $post_id ) {
+	if ( ! isset( $_POST['game_video_meta_box_nonce'] ) ||
+		! wp_verify_nonce( $_POST['game_video_meta_box_nonce'], 'game_video_meta_box' ) ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+
+	if ( isset( $_POST['game_video_embed'] ) ) {
+
+		$raw_embed = wp_unslash( $_POST['game_video_embed'] );
+
+		if ( ! empty( trim( $raw_embed ) ) ) {
+			$allowed_iframe = array(
+				'iframe' => array(
+					'src'             => true,
+					'width'           => true,
+					'height'          => true,
+					'title'           => true,
+					'frameborder'     => true,
+					'allow'           => true,
+					'allowfullscreen' => true,
+					'loading'         => true,
+					'referrerpolicy'  => true,
+				),
+			);
+
+			$sanitized_embed = wp_kses( $raw_embed, $allowed_iframe );
+
+			update_post_meta( $post_id, '_game_video_embed', $sanitized_embed );
+		}
+		else{
+			delete_post_meta( $post_id, '_game_video_embed' );
+		}
+	}
+
+	if ( isset( $_POST['game_video_title'] ) ) {
+		$title = sanitize_text_field( wp_unslash( $_POST['game_video_title'] ) );
+
+		if( ! empty( $title ) ){
+			update_post_meta( $post_id, '_game_video_title', $title );
+		}
+		else{
+			delete_post_meta( $post_id, '_game_video_title' );
+		}
 	}
 }
 
@@ -2770,6 +2931,53 @@ function jannah_child_prioritize_recently_added_sticky_posts( $posts, $query ){
 	}
 
 	return $merged;
+}
+
+function jannah_child_get_gameplay_title( $post ){
+
+	if( ! $post ){
+		return '';
+	}
+
+	$post_obj = is_numeric( $post ) ? get_post( $post ) : $post;
+
+	if( ! $post_obj ){
+		return '';
+	}
+
+	if( $custom = get_post_meta( $post_obj->ID, '_game_video_title', true ) ){
+		return $custom;
+	}
+
+	$base = $post_obj->post_title;
+
+	if( ( $pos = stripos( $base, ' free download' ) ) !== false ){
+		$base = substr( $base, 0, $pos );
+	}
+
+	$base = preg_replace( '/\(.*?\)/', '', $base );
+	$base = trim( $base );
+
+	if( empty( $base ) ){
+		return $full_title;
+	}
+
+	if( stripos( $base, 'call of duty' ) === 0 ){
+		$base = 'Call of Duty';
+	}
+
+	if( stripos( $base, 'grand theft auto' ) === 0 ){
+		$base = 'Grand Theft Auto';
+	}
+
+	$words = preg_split( '/\s+/', $base );
+
+	if( count( $words ) > 6 ){
+		$words = array_slice( $words, 0, 6 );
+	}
+
+	$title = implode( ' ', $words );
+	return ucwords( $title );
 }
 
 
